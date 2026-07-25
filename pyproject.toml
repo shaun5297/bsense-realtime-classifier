@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bsense-realtime-classifier"
+version = "0.1.0"
+description = "Standalone FP1/FP2 LSL model inference application for BSense"
+readme = "README.md"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+  "joblib>=1.3",
+  "numpy>=2.0",
+  "pylsl==1.18.2",
+  "scikit-learn>=1.5",
+  "scipy>=1.12",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8.0"]
+xdf = ["pyxdf>=1.16"]
+
+[project.scripts]
+bsense-classifier = "bsense_classifier.app:main"
+bsense-classifier-cli = "bsense_classifier.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+filterwarnings = [
+  "ignore:Setting the shape on a NumPy array has been deprecated:DeprecationWarning",
+]
