@@ -626,11 +626,16 @@ class ClassifierApp:
         if self.engine and self.engine.running:
             return
         output = Path(self.output_path.get()) if self.output_path.get() else None
+        try:
+            threshold = float(self.threshold.get())
+        except (tk.TclError, ValueError):
+            messagebox.showerror("阈值无效", "接纳阈值必须是 0.30–0.95 之间的数字。")
+            return
         config = EngineConfig(
             stream_name=self.stream_name.get().strip(),
             marker_stream_name=self.marker_name.get().strip()
             or "BSense Experiment Markers",
-            confidence_threshold=self.threshold.get(),
+            confidence_threshold=threshold,
             smoothing_windows=3,
             confirmation_windows=2,
             auto_analyze_event_tasks=self.auto_event_analysis.get(),
