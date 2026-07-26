@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import ctypes
 import json
+import math
 import queue
 from datetime import datetime
 from pathlib import Path
@@ -26,6 +27,19 @@ AMBER = "#B4690E"
 RED = "#BC3B3B"
 MUTED = "#617184"
 BORDER = "#DCE4EC"
+MIN_CONFIDENCE_THRESHOLD = 0.30
+MAX_CONFIDENCE_THRESHOLD = 0.95
+
+
+def parse_confidence_threshold(value: object) -> float:
+    threshold = float(value)
+    if (
+        not math.isfinite(threshold)
+        or threshold < MIN_CONFIDENCE_THRESHOLD
+        or threshold > MAX_CONFIDENCE_THRESHOLD
+    ):
+        raise ValueError("confidence threshold is outside the supported range")
+    return threshold
 
 
 def _default_model_path() -> str:
@@ -321,8 +335,8 @@ class ClassifierApp:
         self._label(options, "接纳阈值", color=MUTED).pack(side=LEFT)
         threshold_spinbox = ttk.Spinbox(
             options,
-            from_=0.30,
-            to=0.95,
+            from_=MIN_CONFIDENCE_THRESHOLD,
+            to=MAX_CONFIDENCE_THRESHOLD,
             increment=0.01,
             width=6,
             textvariable=self.threshold,
@@ -626,11 +640,16 @@ class ClassifierApp:
         if self.engine and self.engine.running:
             return
         output = Path(self.output_path.get()) if self.output_path.get() else None
+        try:
+            threshold = parse_confidence_threshold(self.threshold.get())
+        except (tk.TclError, ValueError):
+            messagebox.showerror("阈值无效", "接纳阈值必须是 0.30–0.95 之间的数字。")
+            return
         config = EngineConfig(
             stream_name=self.stream_name.get().strip(),
             marker_stream_name=self.marker_name.get().strip()
             or "BSense Experiment Markers",
-            confidence_threshold=self.threshold.get(),
+            confidence_threshold=threshold,
             smoothing_windows=3,
             confirmation_windows=2,
             auto_analyze_event_tasks=self.auto_event_analysis.get(),

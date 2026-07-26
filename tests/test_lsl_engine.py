@@ -1,14 +1,57 @@
 from __future__ import annotations
 
+from collections import deque
+
 import numpy as np
 
 from bsense_classifier.lsl_engine import (
     EngineConfig,
     PendingTrigger,
+    RealtimeEngine,
     interpolate_buffer,
     result_record,
 )
 from bsense_classifier.model_runtime import InferenceResult
+
+
+class _StubRuntime:
+    def __init__(self, event_locked: bool) -> None:
+        self.task = "m2_nback"
+        self.event_locked = event_locked
+        self.window_seconds = 4.0
+        self.window_offset_seconds = 0.0
+        self.stride_seconds = 1.0
+        self.sfreq = 250.0
+        self.default_threshold = 0.5
+        self.label_mapping = {}
+
+
+def _engine_with_data(event_locked: bool) -> RealtimeEngine:
+    engine = RealtimeEngine(_StubRuntime(event_locked), EngineConfig())
+    engine._latest_lsl_timestamp = 100.0
+    return engine
+
+
+def test_manual_trigger_rejected_for_continuous_models() -> None:
+    engine = _engine_with_data(event_locked=False)
+    assert engine.manual_trigger() is False
+    assert engine._manual_requests.empty()
+    pending: deque[PendingTrigger] = deque()
+    engine._drain_triggers(None, pending)
+    assert not pending
+    status = engine.events.get_nowait()
+    assert status["kind"] == "status"
+    assert "连续自动分析" in status["message"]
+
+
+def test_manual_trigger_accepted_for_event_locked_models() -> None:
+    engine = _engine_with_data(event_locked=True)
+    assert engine.manual_trigger() is True
+    pending: deque[PendingTrigger] = deque()
+    engine._drain_triggers(None, pending)
+    assert len(pending) == 1
+    assert pending[0].source == "manual"
+    assert pending[0].window_start == 100.0
 
 
 def test_interpolate_buffer_reorders_channels() -> None:

@@ -77,6 +77,35 @@ def test_all_tasks_have_actionable_guidance() -> None:
         assert guidance.title
         assert len(guidance.steps) >= 3
         assert guidance.trigger_note
-        assert "FP1/FP2" in guidance.limitation or guidance.limitation
+        assert guidance.limitation
     assert "自动分析" in guidance_for("m1_mi").trigger_note
     assert "自动分析" in guidance_for("m4a_intent").trigger_note
+
+
+class _StubClassifier:
+    classes_ = np.array([0, 1])
+
+    def predict_proba(self, _features: np.ndarray) -> np.ndarray:
+        return np.array([[0.01, 0.99]])
+
+
+def test_incomplete_label_mapping_falls_back_to_class_id() -> None:
+    artifact = {
+        "artifact_schema_version": 2,
+        "task": "m3a_artifact",
+        "target_kind": "classification",
+        "model": _StubClassifier(),
+        "feature_mode": "spectral",
+        "sfreq": 250.0,
+        "window_seconds": 4.0,
+        "stride_seconds": 1.0,
+        "bandpass_hz": (1.0, 45.0),
+        "channel_count": 2,
+        "deployment_mode": "continuous",
+        "label_mapping": {0: "clean_baseline"},
+    }
+    runtime = ModelRuntime(artifact)
+    raw = np.random.default_rng(0).normal(0.0, 10.0, size=(2, 1000))
+    result = runtime.infer(raw)
+    assert result.candidate == 1
+    assert result.label == "1"
