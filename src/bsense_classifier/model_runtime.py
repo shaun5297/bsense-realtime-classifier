@@ -349,7 +349,7 @@ class ModelRuntime:
             signal_quality=quality_reason,
             quality_ok=quality_ok,
             candidate=candidate,
-            label=self.label_mapping[candidate],
+            label=self.label_mapping.get(candidate, str(candidate)),
             confidence=float(probabilities[index]),
             probabilities=tuple(float(value) for value in probabilities),
             classes=classes,

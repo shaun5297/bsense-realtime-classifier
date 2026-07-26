@@ -185,6 +185,12 @@ class RealtimeEngine:
             self._thread.join(timeout=timeout)
 
     def manual_trigger(self, event: str = "manual_trigger") -> bool:
+        if not self.runtime.event_locked:
+            self._emit(
+                "status",
+                message="该模型为连续自动分析，无需手动触发。",
+            )
+            return False
         with self._latest_lock:
             ready = self._latest_lsl_timestamp is not None
         if not ready:
