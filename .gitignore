@@ -7,3 +7,4 @@ build/
 *.egg-info/
 logs/
 .claude/
+.DS_Store
