@@ -4,6 +4,8 @@ __pycache__/
 .venv/
 dist/
 build/
+install/
+log/
 *.egg-info/
 logs/
 .claude/

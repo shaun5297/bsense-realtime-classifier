@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>bsense_realtime_classifier</name>
+  <version>0.2.0</version>
+  <description>BSense LSL EEG classifier with optional Unitree ROS 2 output.</description>
+  <maintainer email="bsense@example.com">BSense</maintainer>
+  <license>BSD-3-Clause</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake_python</buildtool_depend>
+  <depend>rclcpp</depend>
+  <depend>unitree_api</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

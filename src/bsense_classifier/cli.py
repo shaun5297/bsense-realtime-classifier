@@ -6,11 +6,13 @@ import argparse
 import json
 import queue
 import signal
+import sys
 from dataclasses import asdict
 from pathlib import Path
 
 from .lsl_engine import EngineConfig, RealtimeEngine
 from .model_runtime import ModelRuntime
+from .output_plugins import UnitreeOutput
 from .task_guidance import guidance_for
 
 
@@ -35,6 +37,22 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--smoothing", type=int, default=3, help="平滑窗口数")
     parser.add_argument("--confirmation", type=int, default=2, help="连续确认次数")
     parser.add_argument("--resolve-timeout", type=float, default=15.0)
+    parser.add_argument(
+        "--transport",
+        choices=("stdout", "unitree_ros2"),
+        default="stdout",
+        help="结果输出方式；unitree_ros2 通过本机 Unix Socket 发送到 ROS 2 Bridge",
+    )
+    parser.add_argument(
+        "--socket-path",
+        default="/tmp/bci_unitree.sock",
+        help="unitree_ros2 输出插件使用的 Unix Socket 路径",
+    )
+    parser.add_argument(
+        "--result-only",
+        action="store_true",
+        help="stdout 只输出分类结果，其他状态输出到 stderr",
+    )
     return parser
 
 
@@ -55,6 +73,7 @@ def main(argv: list[str] | None = None) -> int:
         ),
         flush=True,
     )
+    output = UnitreeOutput(args.socket_path) if args.transport == "unitree_ros2" else None
     engine = RealtimeEngine(
         runtime,
         EngineConfig(
@@ -87,10 +106,23 @@ def main(argv: list[str] | None = None) -> int:
             if stop_requested:
                 break
             continue
-        print(json.dumps(event, ensure_ascii=False), flush=True)
+        if args.transport == "unitree_ros2":
+            if event.get("kind") == "result":
+                output.send(event["record"])
+            else:
+                print(json.dumps(event, ensure_ascii=False), file=sys.stderr, flush=True)
+        elif args.result_only:
+            if event.get("kind") == "result":
+                print(json.dumps(event["record"], ensure_ascii=False), flush=True)
+            else:
+                print(json.dumps(event, ensure_ascii=False), file=sys.stderr, flush=True)
+        else:
+            print(json.dumps(event, ensure_ascii=False), flush=True)
         if event.get("kind") == "error":
             exit_code = 1
     engine.stop()
+    if output is not None:
+        output.close()
     return exit_code
 
 

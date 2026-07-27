@@ -1,6 +1,7 @@
 # BSense 实时脑电分类器
 
-这是一个独立运行的 FP1/FP2 双通道 EEG 实时分类项目。它可以：
+这是一个独立运行的 FP1/FP2 双通道 EEG 实时分类项目，也支持通过 Unitree ROS 2
+控制机器狗。它可以：
 
 - 加载项目内置的 6 个 BSense 模型；
 - 自动查找或按名称连接其他软件发布的 LSL EEG 流；
@@ -8,6 +9,7 @@
 - 对连续任务定时推理，对事件任务接收 Marker 或手动触发；
 - 在桌面界面显示分类、置信度、各类别概率和信号质量；
 - 将每次结果保存为 JSONL，便于后续统计和接入其他软件。
+- 通过 Unix Socket 和 ROS 2 Bridge 将脑电分类结果转换为机器狗运动指令。
 
 > 当前模型属于实验模型，训练对象数量仍少。程序只输出分析结果，不会直接控制设备，也不能用于医疗、安全或驾驶判断。
 
@@ -40,6 +42,20 @@ cd D:\codebase\BCI\bsense-realtime-classifier
 M1 和 M4A 默认开启“自动滚动分析”，每 4 秒产生一次候选结果，不需要反复
 点击手动触发。Marker 或“立即对齐触发一次”用于让窗口与外部任务提示严格对齐。
 M4B 是快速 ERP 事件任务，必须使用 Marker 或手动触发，不能改成普通连续分析。
+
+Linux 下也可以直接使用命令行运行分类器。先启动 BioMulti Lite 并发布 LSL EEG：
+
+```bash
+cd /home/dd/bsense-realtime-classifier
+env PYTHONPATH=/tmp/bsense_runtime:/tmp/bsense_pylsl:/home/dd/bsense-realtime-classifier/src \
+  PYLSL_LIB=/tmp/liblsl/liblsl-1.17.7-jammy_arm64/lib/liblsl.so.1.17.7 \
+  /usr/bin/python3 -m bsense_classifier.cli \
+  --model /home/dd/bsense-realtime-classifier/models/m1_mi/model.joblib \
+  --stream-type EEG --threshold 0.30 --smoothing 1 --confirmation 1 --no-marker
+```
+
+桌面端仍可使用上面的 Windows 启动方式；Linux 安装后也可以使用
+`bsense-classifier` 启动桌面界面。
 
 ## LSL 输入要求
 
@@ -131,6 +147,54 @@ BioMulti Lite 页面勾选了多项，如果 LSL 实际只发布/只发现 EEG�
 
 疲劳回归模型则输出 `value` 和 `raw_value`。
 
+## Unitree ROS 2 输出插件
+
+本仓库同时包含 Unitree ROS 2 Bridge，由 `bsense_realtime_classifier` ROS 2 package
+管理。分类器通过本机 Unix Socket 发送固定的 `bci_result_v1` 协议，Bridge 再发布
+`/api/sport/request`，最后由 CycloneDDS 发送到机器狗：
+
+```text
+BioMulti Lite --LSL EEG--> 分类器 --bci_result_v1/Unix Socket--> ROS 2 Bridge
+  --/api/sport/request/CycloneDDS--> Unitree 机器狗
+```
+
+完整运行方式：
+
+```bash
+/home/dd/bsense-realtime-classifier/install/bsense_realtime_classifier/lib/bsense_realtime_classifier/run_bci_unitree.sh
+```
+
+分类器的输出插件通过 `--transport unitree_ros2` 启用。语义动作与运动向量的默认映射位于
+`src/bsense_classifier/output_plugins.py`，支持 `idle`、`left_mi`、`right_mi`，并预留
+`forward`、`backward`、`strafe_left`、`strafe_right`、`turn_left`、`turn_right`。
+
+仅测试 ROS 2 Bridge 和数据链路时，可使用模拟结果。以下命令中的 `lo` 仅用于本机联调：
+
+```bash
+source /opt/ros/humble/setup.bash
+source /home/dd/unitree_ros2/setup.sh
+source /home/dd/ros2_ws/install/setup.bash
+export BCI_CYCLONEDDS_INTERFACE=lo
+export CYCLONEDDS_URI="<CycloneDDS><Domain><General><Interfaces><NetworkInterface name=\"${BCI_CYCLONEDDS_INTERFACE}\" priority=\"default\" multicast=\"default\" /></Interfaces></General></Domain></CycloneDDS>"
+ros2 run bsense_realtime_classifier unitree_ros2_bridge
+```
+
+另开终端发送模拟结果：
+
+```bash
+/usr/bin/python3 /home/dd/bsense-realtime-classifier/install/bsense_realtime_classifier/lib/bsense_realtime_classifier/mock_bci_sender.py \
+  --label left_mi --interval 0.2 --socket-path /tmp/bci_unitree.sock
+```
+
+构建整个单包：
+
+```bash
+cd ~/bsense-realtime-classifier
+source /opt/ros/humble/setup.bash
+source ~/unitree_ros2/cyclonedds_ws/install/setup.bash
+colcon build --packages-select bsense_realtime_classifier
+```
+
 ## 命令行运行
 
 适合后台运行或给其他程序调用：
@@ -150,6 +214,16 @@ python -m pip install -e .
 ```
 
 随后可以使用 `bsense-classifier`（桌面界面）或 `bsense-classifier-cli`（命令行）。
+
+Linux 下运行完整的 BioMulti Lite → 分类器 → ROS 2 → 机器狗流程：
+
+```bash
+export BCI_CYCLONEDDS_INTERFACE=<网卡名>
+/home/dd/bsense-realtime-classifier/install/bsense_realtime_classifier/lib/bsense_realtime_classifier/run_bci_unitree.sh
+```
+
+网卡名可用 `ip -br link` 查看；`lo` 只适合本机联调。BioMulti Lite 必须先发布 LSL EEG，
+所有程序都可以用 `Ctrl+C` 停止。
 
 ## 模型适用范围
 

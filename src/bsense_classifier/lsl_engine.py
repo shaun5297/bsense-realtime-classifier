@@ -114,6 +114,7 @@ def result_record(
     rejection_reasons: tuple[str, ...] = (),
 ) -> dict[str, Any]:
     record: dict[str, Any] = {
+        "protocol": "bci_result_v1",
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "lsl_timestamp": timestamp,
         "task": result.task,
