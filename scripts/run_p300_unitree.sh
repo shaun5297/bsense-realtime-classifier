@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -eo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ROS_SETUP="${BCI_ROS_SETUP:-/opt/ros/humble/setup.bash}"
@@ -8,10 +8,11 @@ PROJECT_SETUP="${PROJECT_ROOT}/install/setup.bash"
 SOCKET_PATH="${BCI_UNITREE_SOCKET:-/tmp/bsense_unitree.sock}"
 MODEL_PATH="${BCI_P300_MODEL:-${PROJECT_ROOT}/models/m7_p300/model.joblib}"
 BRIDGE_CONFIG="${BCI_BRIDGE_CONFIG:-${PROJECT_ROOT}/config/unitree_bridge_ros2.json}"
-SPORT_STATE_TOPIC="${BCI_SPORT_STATE_TOPIC:-sportmodestate}"
+SPORT_STATE_TOPIC="${BCI_SPORT_STATE_TOPIC:-/lf/sportmodestate}"
 OBSTACLE_DISTANCE="${BCI_OBSTACLE_DISTANCE_M:-0.45}"
 ROS_LOG_DIR="${ROS_LOG_DIR:-/tmp/bsense_ros_logs}"
 
+export AMENT_TRACE_SETUP_FILES=""
 source "${ROS_SETUP}"
 source "${UNITREE_SETUP}"
 source "${PROJECT_SETUP}"
@@ -35,7 +36,8 @@ trap cleanup EXIT INT TERM
 ros2 run bsense_realtime_classifier bsense_unitree_bridge --ros-args \
   -p "socket_path:=${SOCKET_PATH}" \
   -p "sport_state_topic:=${SPORT_STATE_TOPIC}" \
-  -p "obstacle_stop_distance_m:=${OBSTACLE_DISTANCE}" &
+  -p "obstacle_stop_distance_m:=${OBSTACLE_DISTANCE}" \
+  -p "require_obstacle_clear:=${BCI_REQUIRE_OBSTACLE_CLEAR:-false}" &
 BRIDGE_PID=$!
 
 for _attempt in $(seq 1 50); do
