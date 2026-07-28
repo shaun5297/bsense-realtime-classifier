@@ -493,6 +493,37 @@ def _json_ready(value: Any) -> Any:
     return value
 
 
+def _public_training_metadata(
+    dataset: P300Dataset,
+) -> tuple[dict[str, str], dict[str, str]]:
+    """Return stable aliases that do not expose local paths or subject labels."""
+
+    groups = sorted(set(str(value) for value in dataset.groups))
+    group_aliases = {
+        group: f"acquisition_{index:03d}"
+        for index, group in enumerate(groups, start=1)
+    }
+    recording_aliases = {
+        recording: f"recording_{index:03d}.xdf"
+        for index, recording in enumerate(dataset.recordings, start=1)
+    }
+    return group_aliases, recording_aliases
+
+
+def _public_metadata_row(
+    row: dict[str, Any],
+    *,
+    group_aliases: dict[str, str],
+    recording_aliases: dict[str, str],
+) -> dict[str, Any]:
+    public = dict(row)
+    if "subject_id" in public:
+        public["subject_id"] = group_aliases[str(public["subject_id"])]
+    if "recording" in public:
+        public["recording"] = recording_aliases[str(public["recording"])]
+    return public
+
+
 def train_and_export(
     dataset: P300Dataset,
     output_dir: Path,
@@ -504,6 +535,11 @@ def train_and_export(
     unique_groups = sorted(set(str(value) for value in dataset.groups))
     if len(unique_groups) < 2:
         raise ValueError("至少需要两份独立采集目录才能进行留一受试者评估。")
+    group_aliases, recording_aliases = _public_training_metadata(dataset)
+    public_groups = [group_aliases[group] for group in unique_groups]
+    public_recordings = [
+        recording_aliases[recording] for recording in dataset.recordings
+    ]
 
     reports: dict[str, Any] = {}
     oof_by_model: dict[str, np.ndarray] = {}
@@ -528,9 +564,14 @@ def train_and_export(
             folds.append(
                 {
                     "fold": fold,
-                    "test_subject": str(dataset.groups[test_indices][0]),
+                    "test_subject": group_aliases[
+                        str(dataset.groups[test_indices][0])
+                    ],
                     "train_subjects": sorted(
-                        set(str(value) for value in dataset.groups[train_indices])
+                        {
+                            group_aliases[str(value)]
+                            for value in dataset.groups[train_indices]
+                        }
                     ),
                     "flash_metrics": flash_metrics(
                         dataset.targets[test_indices], fold_probabilities
@@ -547,7 +588,17 @@ def train_and_export(
             "folds": folds,
         }
         oof_by_model[name] = oof
-        _write_csv(output / f"trial_predictions_{name}.csv", trial_rows)
+        _write_csv(
+            output / f"trial_predictions_{name}.csv",
+            [
+                _public_metadata_row(
+                    row,
+                    group_aliases=group_aliases,
+                    recording_aliases=recording_aliases,
+                )
+                for row in trial_rows
+            ],
+        )
 
     selected_name = max(
         reports,
@@ -567,7 +618,11 @@ def train_and_export(
     ):
         prediction_rows.append(
             {
-                **row,
+                **_public_metadata_row(
+                    row,
+                    group_aliases=group_aliases,
+                    recording_aliases=recording_aliases,
+                ),
                 "target_probability": float(probability),
                 "predicted_target": int(probability >= 0.5),
             }
@@ -596,8 +651,8 @@ def train_and_export(
         "deployment_mode": "event_locked_marker_required",
         "experimental_model": True,
         "control_output_enabled": True,
-        "training_subjects": unique_groups,
-        "training_recordings": list(dataset.recordings),
+        "training_subjects": public_groups,
+        "training_recordings": public_recordings,
         "evaluation": "leave_one_acquisition_folder_out",
         "p300_control_defaults": {
             "sequences_per_trial": 10,
@@ -616,9 +671,9 @@ def train_and_export(
     }
     report = {
         "task": "m7_p300",
-        "data_root_recordings": list(dataset.recordings),
+        "data_root_recordings": public_recordings,
         "recording_count": len(dataset.recordings),
-        "subject_groups": unique_groups,
+        "subject_groups": public_groups,
         "valid_flash_epochs": len(dataset.targets),
         "skipped_windows": dataset.skipped_windows,
         "class_counts": class_counts,
@@ -626,7 +681,7 @@ def train_and_export(
         "selected_flash_metrics": reports[selected_name]["flash_metrics"],
         "selected_trial_metrics": reports[selected_name]["trial_metrics"],
         "models": reports,
-        "model_path": str(model_path),
+        "model_path": model_path.name,
         "limitations": [
             "FP1/FP2 不是典型 P300 顶区通道。",
             "当前独立采集人数很少，指标仅用于工程联调。",

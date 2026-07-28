@@ -19,6 +19,8 @@ from .p300_training import (
     WINDOW_SECONDS,
     P300Dataset,
     _json_ready,
+    _public_metadata_row,
+    _public_training_metadata,
     _target_probabilities,
     _write_csv,
     aggregate_trials,
@@ -62,6 +64,7 @@ def _artifact(
     *,
     groups: list[str],
 ) -> dict[str, Any]:
+    group_aliases, recording_aliases = _public_training_metadata(dataset)
     return {
         "artifact_schema_version": 2,
         "task": "m7_p300",
@@ -84,8 +87,10 @@ def _artifact(
         "deployment_mode": "event_locked_marker_required",
         "experimental_model": True,
         "control_output_enabled": True,
-        "training_subjects": groups,
-        "training_recordings": list(dataset.recordings),
+        "training_subjects": [group_aliases[group] for group in groups],
+        "training_recordings": [
+            recording_aliases[recording] for recording in dataset.recordings
+        ],
         "evaluation": "leave_one_acquisition_folder_out",
         "architecture_reference": (
             "Lawhern EEGNet; adapted from local Braindecode/ARL references"
@@ -114,6 +119,11 @@ def train_and_export_eegnet(
     groups = sorted(set(str(value) for value in dataset.groups))
     if len(groups) < 2:
         raise ValueError("EEGNet 留组评估至少需要两份独立采集目录。")
+    group_aliases, recording_aliases = _public_training_metadata(dataset)
+    public_groups = [group_aliases[group] for group in groups]
+    public_recordings = [
+        recording_aliases[recording] for recording in dataset.recordings
+    ]
 
     oof = np.full(len(dataset.targets), np.nan, dtype=np.float64)
     fold_reports: list[dict[str, Any]] = []
@@ -149,9 +159,14 @@ def train_and_export_eegnet(
         fold_reports.append(
             {
                 "fold": fold,
-                "test_subject": str(dataset.groups[test_indices][0]),
+                "test_subject": group_aliases[
+                    str(dataset.groups[test_indices][0])
+                ],
                 "train_subjects": sorted(
-                    set(str(value) for value in dataset.groups[train_indices])
+                    {
+                        group_aliases[str(value)]
+                        for value in dataset.groups[train_indices]
+                    }
                 ),
                 "epochs_run": len(model.training_history_),
                 "best_validation_loss": model.best_validation_loss_,
@@ -168,10 +183,24 @@ def train_and_export_eegnet(
 
     trial_report, trial_rows = aggregate_trials(dataset.metadata, oof)
     flash_report = flash_metrics(dataset.targets, oof)
-    _write_csv(output / "trial_predictions_eegnet.csv", trial_rows)
+    _write_csv(
+        output / "trial_predictions_eegnet.csv",
+        [
+            _public_metadata_row(
+                row,
+                group_aliases=group_aliases,
+                recording_aliases=recording_aliases,
+            )
+            for row in trial_rows
+        ],
+    )
     flash_rows = [
         {
-            **row,
+            **_public_metadata_row(
+                row,
+                group_aliases=group_aliases,
+                recording_aliases=recording_aliases,
+            ),
             "target_probability": float(probability),
             "predicted_target": int(probability >= 0.5),
         }
@@ -202,8 +231,8 @@ def train_and_export_eegnet(
             "二分类不匹配。"
         ),
         "recording_count": len(dataset.recordings),
-        "recordings": list(dataset.recordings),
-        "subject_groups": groups,
+        "recordings": public_recordings,
+        "subject_groups": public_groups,
         "valid_flash_epochs": len(dataset.targets),
         "class_counts": {
             "non_target": int(np.sum(dataset.targets == 0)),
@@ -220,7 +249,7 @@ def train_and_export_eegnet(
             "best_validation_loss": final_model.best_validation_loss_,
             "device": final_model.device_used_,
         },
-        "model_path": str(model_path),
+        "model_path": model_path.name,
         "limitations": [
             "FP1/FP2 不是典型 P300 顶区通道。",
             "仅有三个独立采集组，深度模型指标不稳定。",

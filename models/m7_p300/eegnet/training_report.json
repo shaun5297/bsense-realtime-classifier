@@ -6,14 +6,14 @@
   "pretrained_reason": "本地权重的框架、60通道、151点和4分类契约与当前2通道、300点、二分类不匹配。",
   "recording_count": 3,
   "recordings": [
-    "D:\\codebase\\BCI\\data\\bsense\\bsense\\lq\\sub-pilot01_ses-01_task-m7_p300_run-001.xdf",
-    "D:\\codebase\\BCI\\data\\bsense\\bsense\\sxc\\sub-pilot01_ses-01_task-m7_p300_run-001.xdf",
-    "D:\\codebase\\BCI\\data\\bsense\\bsense\\xyz\\sub-pilot01_ses-01_task-m7_p300_run-001.xdf"
+    "recording_001.xdf",
+    "recording_002.xdf",
+    "recording_003.xdf"
   ],
   "subject_groups": [
-    "lq",
-    "sxc",
-    "xyz"
+    "acquisition_001",
+    "acquisition_002",
+    "acquisition_003"
   ],
   "valid_flash_epochs": 16200,
   "class_counts": {
@@ -51,10 +51,10 @@
   "folds": [
     {
       "fold": 1,
-      "test_subject": "lq",
+      "test_subject": "acquisition_001",
       "train_subjects": [
-        "sxc",
-        "xyz"
+        "acquisition_002",
+        "acquisition_003"
       ],
       "epochs_run": 12,
       "best_validation_loss": 0.6930462531101557,
@@ -84,10 +84,10 @@
     },
     {
       "fold": 2,
-      "test_subject": "sxc",
+      "test_subject": "acquisition_002",
       "train_subjects": [
-        "lq",
-        "xyz"
+        "acquisition_001",
+        "acquisition_003"
       ],
       "epochs_run": 11,
       "best_validation_loss": 0.6925586154431472,
@@ -117,10 +117,10 @@
     },
     {
       "fold": 3,
-      "test_subject": "xyz",
+      "test_subject": "acquisition_003",
       "train_subjects": [
-        "lq",
-        "sxc"
+        "acquisition_001",
+        "acquisition_002"
       ],
       "epochs_run": 8,
       "best_validation_loss": 0.6927708721455232,
@@ -154,7 +154,7 @@
     "best_validation_loss": 0.6939449517324628,
     "device": "cuda"
   },
-  "model_path": "D:\\codebase\\BCI\\bsense-realtime-classifier-master\\models\\m7_p300\\eegnet\\model.joblib",
+  "model_path": "model.joblib",
   "limitations": [
     "FP1/FP2 不是典型 P300 顶区通道。",
     "仅有三个独立采集组，深度模型指标不稳定。",

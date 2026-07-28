@@ -2,11 +2,15 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import joblib
 import numpy as np
 
 from bsense_classifier.p300_training import (
     BANDPASS_HZ,
     COMMANDS,
+    P300Dataset,
+    _public_metadata_row,
+    _public_training_metadata,
     aggregate_trials,
     batch_erp_features,
     discover_recordings,
@@ -86,3 +90,66 @@ def test_full_erp_features_match_runtime_extraction() -> None:
             rtol=1e-9,
             atol=1e-9,
         )
+
+
+def test_public_training_metadata_removes_paths_and_subject_labels() -> None:
+    dataset = P300Dataset(
+        features=np.empty((2, 1)),
+        raw_erp_features=np.empty((2, 1)),
+        targets=np.array([0, 1]),
+        groups=np.array(["person-b", "person-a"], dtype=object),
+        metadata=(),
+        feature_names=("feature",),
+        raw_erp_feature_names=("raw",),
+        recordings=(
+            r"D:\private\person-b\session.xdf",
+            r"D:\private\person-a\session.xdf",
+        ),
+        skipped_windows=0,
+    )
+
+    group_aliases, recording_aliases = _public_training_metadata(dataset)
+    row = _public_metadata_row(
+        {
+            "subject_id": "person-b",
+            "recording": dataset.recordings[0],
+            "global_trial": 1,
+        },
+        group_aliases=group_aliases,
+        recording_aliases=recording_aliases,
+    )
+
+    assert group_aliases == {
+        "person-a": "acquisition_001",
+        "person-b": "acquisition_002",
+    }
+    assert list(recording_aliases.values()) == [
+        "recording_001.xdf",
+        "recording_002.xdf",
+    ]
+    assert row == {
+        "subject_id": "acquisition_002",
+        "recording": "recording_001.xdf",
+        "global_trial": 1,
+    }
+
+
+def test_packaged_p300_models_use_public_training_metadata() -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    model_paths = (
+        project_root / "models" / "m7_p300" / "model.joblib",
+        project_root / "models" / "m7_p300" / "eegnet" / "model.joblib",
+    )
+
+    for model_path in model_paths:
+        artifact = joblib.load(model_path)
+        assert artifact["training_subjects"] == [
+            "acquisition_001",
+            "acquisition_002",
+            "acquisition_003",
+        ]
+        assert artifact["training_recordings"] == [
+            "recording_001.xdf",
+            "recording_002.xdf",
+            "recording_003.xdf",
+        ]

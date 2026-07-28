@@ -1,15 +1,15 @@
 {
   "task": "m7_p300",
   "data_root_recordings": [
-    "D:\\codebase\\BCI\\data\\bsense\\bsense\\lq\\sub-pilot01_ses-01_task-m7_p300_run-001.xdf",
-    "D:\\codebase\\BCI\\data\\bsense\\bsense\\sxc\\sub-pilot01_ses-01_task-m7_p300_run-001.xdf",
-    "D:\\codebase\\BCI\\data\\bsense\\bsense\\xyz\\sub-pilot01_ses-01_task-m7_p300_run-001.xdf"
+    "recording_001.xdf",
+    "recording_002.xdf",
+    "recording_003.xdf"
   ],
   "recording_count": 3,
   "subject_groups": [
-    "lq",
-    "sxc",
-    "xyz"
+    "acquisition_001",
+    "acquisition_002",
+    "acquisition_003"
   ],
   "valid_flash_epochs": 16200,
   "skipped_windows": 0,
@@ -67,10 +67,10 @@
       "folds": [
         {
           "fold": 1,
-          "test_subject": "lq",
+          "test_subject": "acquisition_001",
           "train_subjects": [
-            "sxc",
-            "xyz"
+            "acquisition_002",
+            "acquisition_003"
           ],
           "flash_metrics": {
             "accuracy": 0.5064814814814815,
@@ -97,10 +97,10 @@
         },
         {
           "fold": 2,
-          "test_subject": "sxc",
+          "test_subject": "acquisition_002",
           "train_subjects": [
-            "lq",
-            "xyz"
+            "acquisition_001",
+            "acquisition_003"
           ],
           "flash_metrics": {
             "accuracy": 0.5496296296296296,
@@ -127,10 +127,10 @@
         },
         {
           "fold": 3,
-          "test_subject": "xyz",
+          "test_subject": "acquisition_003",
           "train_subjects": [
-            "lq",
-            "sxc"
+            "acquisition_001",
+            "acquisition_002"
           ],
           "flash_metrics": {
             "accuracy": 0.524074074074074,
@@ -183,10 +183,10 @@
       "folds": [
         {
           "fold": 1,
-          "test_subject": "lq",
+          "test_subject": "acquisition_001",
           "train_subjects": [
-            "sxc",
-            "xyz"
+            "acquisition_002",
+            "acquisition_003"
           ],
           "flash_metrics": {
             "accuracy": 0.5168518518518519,
@@ -213,10 +213,10 @@
         },
         {
           "fold": 2,
-          "test_subject": "sxc",
+          "test_subject": "acquisition_002",
           "train_subjects": [
-            "lq",
-            "xyz"
+            "acquisition_001",
+            "acquisition_003"
           ],
           "flash_metrics": {
             "accuracy": 0.5416666666666666,
@@ -243,10 +243,10 @@
         },
         {
           "fold": 3,
-          "test_subject": "xyz",
+          "test_subject": "acquisition_003",
           "train_subjects": [
-            "lq",
-            "sxc"
+            "acquisition_001",
+            "acquisition_002"
           ],
           "flash_metrics": {
             "accuracy": 0.5185185185185185,
@@ -274,7 +274,7 @@
       ]
     }
   },
-  "model_path": "D:\\codebase\\BCI\\bsense-realtime-classifier-master\\models\\m7_p300\\model.joblib",
+  "model_path": "model.joblib",
   "limitations": [
     "FP1/FP2 不是典型 P300 顶区通道。",
     "当前独立采集人数很少，指标仅用于工程联调。",
