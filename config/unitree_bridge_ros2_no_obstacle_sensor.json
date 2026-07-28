@@ -6,7 +6,7 @@
   "udp_port": 5005,
   "socket_path": "/tmp/bsense_unitree.sock",
   "timeout_seconds": 1.0,
-  "require_obstacle_clear": true,
+  "require_obstacle_clear": false,
   "motion_duration_seconds": 0.8,
   "linear_speed_mps": 0.35,
   "backward_speed_mps": 0.25,

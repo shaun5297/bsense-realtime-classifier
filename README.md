@@ -144,7 +144,8 @@ ROS 2 Bridge 会响应：
 }
 ```
 
-桥接节点订阅 `sportmodestate` 的 `range_obstacle`，任一有效距离小于默认
+桥接节点默认订阅 Go2-W 的 `/lf/sportmodestate`，并读取其中的
+`range_obstacle`；任一有效距离小于默认
 `0.45 m` 时立即停止；状态超过 1 秒未更新、距离数据未知、Socket 断开、动作时长
 到期或急停锁存时也会停止。Python 和 C++ 两侧都会限制动作时长，C++ 还会把线速度
 限制到 `0.5 m/s`、角速度限制到 `1.0 rad/s`。急停后只有操作员再次点击
@@ -178,9 +179,22 @@ export BCI_CYCLONEDDS_INTERFACE=enp3s0
 - `BCI_P300_MODEL`：训练完成的 `m7_p300/model.joblib`；
 - `BCI_UNITREE_SETUP`：Unitree ROS 2 的 `setup.sh`；
 - `BCI_UNITREE_SOCKET`：双向 Unix Socket 路径；
-- `BCI_SPORT_STATE_TOPIC`：默认 `sportmodestate`，低频话题可设为
-  `lf/sportmodestate`；
+- `BCI_SPORT_STATE_TOPIC`：默认使用 Go2-W 的 `/lf/sportmodestate`；
 - `BCI_OBSTACLE_DISTANCE_M`：障碍停止距离，默认 `0.45`。
+
+真机和比赛模式默认启用避障联锁，使用
+`config/unitree_bridge_ros2.json`。如果联调设备确实没有避障传感器，可显式执行：
+
+```bash
+BCI_REQUIRE_OBSTACLE_CLEAR=false ./scripts/run_p300_unitree.sh
+```
+
+该命令会自动使用
+`config/unitree_bridge_ros2_no_obstacle_sensor.json` 并显示安全警告。此模式会忽略
+障碍物状态，只允许在清空场地、有人值守且急停可用的受控联调环境中使用，禁止用于
+比赛。若通过 `BCI_BRIDGE_CONFIG` 指定其他配置，其中的
+`require_obstacle_clear` 必须与 `BCI_REQUIRE_OBSTACLE_CLEAR` 一致，否则启动脚本会
+拒绝运行。
 
 Unix Socket 只能用于同一台 Ubuntu 主机，因此正式方案要求 P300 控制台和 ROS 2
 Bridge 在同一台比赛电脑运行；脑电设备仍通过 LSL 发布数据。若解码器必须运行在
