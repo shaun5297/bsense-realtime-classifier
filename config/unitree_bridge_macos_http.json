@@ -1,0 +1,15 @@
+{
+  "transport": "http",
+  "command_url": "http://${BCI_UNITREE_HOST}:8000/api/v1/command",
+  "status_url": "http://${BCI_UNITREE_HOST}:8000/api/v1/status",
+  "udp_host": "127.0.0.1",
+  "udp_port": 5005,
+  "socket_path": "/tmp/bsense_unitree.sock",
+  "timeout_seconds": 1.5,
+  "require_obstacle_clear": true,
+  "motion_duration_seconds": 0.8,
+  "linear_speed_mps": 0.35,
+  "backward_speed_mps": 0.25,
+  "angular_speed_rps": 0.65,
+  "auth_token_env": "BCI_BRIDGE_TOKEN"
+}

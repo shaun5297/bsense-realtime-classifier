@@ -88,6 +88,18 @@ GUIDANCE = {
         limitation="FP1/FP2 不是典型 P300 顶区通道，当前结果仅用于探索。",
         result_labels=("non_target", "target"),
     ),
+    "m7_p300": TaskGuidance(
+        title="P300 机器狗六指令控制",
+        short_goal="注视六宫格中的目标指令，由专用控制台聚合多次闪烁后输出机器狗命令。",
+        steps=(
+            "使用专用 bsense-dog-controller 控制台加载 M7 模型并连接 FP1/FP2 EEG。",
+            "完成桥接、避障、急停检查并显式解锁，注视任务提示的目标指令。",
+            "等待十轮闪烁聚合；低质量、低置信度或低领先差结果不会下发。",
+        ),
+        trigger_note="必须由专用控制台按 LSL 时钟记录每次闪烁，普通连续推理没有意义。",
+        limitation="FP1/FP2 不是典型 P300 顶区通道；当前模型仅用于工程联调。",
+        result_labels=("non_target", "target"),
+    ),
 }
 
 

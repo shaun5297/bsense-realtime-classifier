@@ -2,11 +2,14 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .venv/
+.venv-macos-arm64/
 dist/
 build/
 install/
 log/
 *.egg-info/
 logs/
+models/**/cross_subject_flash_predictions.csv
+models/**/trial_predictions_*.csv
 .claude/
 .DS_Store

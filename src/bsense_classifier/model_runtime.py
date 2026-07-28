@@ -218,6 +218,25 @@ def erp_features(
     return downsampled.reshape(-1).astype(np.float64), names
 
 
+def erp_raw_features(
+    processed: np.ndarray,
+    sfreq: float,
+    baseline_seconds: float = 0.2,
+) -> tuple[np.ndarray, list[str]]:
+    """Keep the full baseline-corrected ERP for compact neural networks."""
+
+    baseline_samples = max(1, int(round(baseline_seconds * sfreq)))
+    corrected = processed - processed[:, :baseline_samples].mean(
+        axis=1, keepdims=True
+    )
+    names = [
+        f"ch{channel + 1}_erp_raw_t{sample / sfreq - baseline_seconds:.3f}"
+        for channel in range(2)
+        for sample in range(corrected.shape[1])
+    ]
+    return corrected.reshape(-1).astype(np.float64), names
+
+
 def extract_features(
     raw_window: np.ndarray,
     sfreq: float,
@@ -229,6 +248,8 @@ def extract_features(
         features, names = spectral_features(processed, sfreq)
     elif feature_mode == "erp":
         features, names = erp_features(processed, sfreq)
+    elif feature_mode == "erp_raw":
+        features, names = erp_raw_features(processed, sfreq)
     else:
         raise ArtifactError(f"不支持的特征类型：{feature_mode}")
     return features, names, processed

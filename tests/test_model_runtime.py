@@ -9,6 +9,7 @@ from bsense_classifier.model_runtime import (
     ArtifactError,
     ModelRuntime,
     erp_features,
+    erp_raw_features,
     plan_channels,
     preprocess_window,
     spectral_features,
@@ -54,6 +55,10 @@ def test_feature_shapes_match_training_contract() -> None:
     erp, erp_names = erp_features(processed[:, :300], sfreq)
     assert erp.shape == (120,)
     assert len(erp_names) == 120
+
+    erp_raw, erp_raw_names = erp_raw_features(processed[:, :300], sfreq)
+    assert erp_raw.shape == (600,)
+    assert len(erp_raw_names) == 600
 
 
 def test_every_bundled_model_loads_and_runs() -> None:

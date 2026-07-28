@@ -47,15 +47,91 @@
 每个移动指令默认只持续 `0.8` 秒，控制端定时器会再次发送 `stop`。空格、Esc、
 界面急停按钮或解码出的“急停”都会立即归零并锁定，恢复前必须重新解锁。
 
-### 当前模型尚未训练时
+### 当前模型与训练数据
 
-程序不会用随机模型或硬编码答案冒充脑控结果。没有
-`models/m7_p300/model.joblib` 时仍可启动界面：
+当前 `models/m7_p300/model.joblib` 已由 `data/bsense` 中 3 份完整 M7
+记录（`lq`、`sxc`、`xyz`）训练得到，共使用 16,200 个有效闪烁窗口。训练器按采集
+目录做留一交叉验证，当前六指令 Trial 准确率为 `16.67%`，等于六分类随机水平。
+这个模型只用于打通工程链路，不代表已获得可用的脑控精度。
 
-- 点击六宫格可联调桥接命令和运动方向；
-- 默认 `stdout` 传输只打印 JSON，不会移动真实机器狗；
-- M7 模型加载前不能连接 P300 解码器，也不能开始连续脑控；
-- 人工联调指令会在界面明确标为“人工点击”，不会记录成脑电解码。
+训练产物包括：
+
+- `models/m7_p300/model.joblib`：实时控制台直接加载的模型；
+- `models/m7_p300/training_report.json`：数据统计、逐折指标与局限性；
+- `models/m7_p300/cross_subject_flash_predictions.csv`：逐闪烁预测；
+- `models/m7_p300/trial_predictions_*.csv`：六指令 Trial 聚合结果。
+
+训练器会递归发现新增的 `task-m7_p300*.xdf`。后续用 `bsense-lsl` 继续采集后，
+在项目目录重新运行即可覆盖生成新模型：
+
+```powershell
+.\train_p300.ps1
+```
+
+也可以显式指定数据和输出目录：
+
+```powershell
+python -m bsense_classifier.p300_training `
+  --data-root D:\codebase\BCI\data\bsense `
+  --output-dir .\models\m7_p300
+```
+
+#### EEGNet 对照模型
+
+当前控制结构不是直接把 EEG 做成六分类，而是：
+
+```text
+每次闪烁 target/non_target 二分类
+  → 按 forward/backward/left/right/stop/idle 分组
+  → 每个指令的多次 target 概率求均值
+  → 六指令选择
+```
+
+项目还提供了适配 `2通道 × 300点` 的小型 PyTorch EEGNet。它参考本地
+Braindecode/ARL EEGNet 架构，从当前 M7 数据重新训练；没有使用本地
+`60通道 × 151点 × 4分类` 的 Keras 权重，因为通道空间核和分类头均不兼容。
+
+训练 EEGNet：
+
+```powershell
+.\train_p300_eegnet.ps1
+```
+
+输出模型位于 `models/m7_p300/eegnet/model.joblib`。当前三折留组结果：
+
+| 模型 | Flash balanced accuracy | Flash AP | 六指令 Trial accuracy |
+|---|---:|---:|---:|
+| Shrinkage LDA | 49.23% | 16.10% | 16.67% |
+| EEGNet | 49.74% | 16.38% | 16.48% |
+
+两者都在机会水平附近，EEGNet 暂未优于 LDA，所以默认控制台仍加载 LDA。
+需要人工比较 EEGNet 时：
+
+```powershell
+.\run_dog_controller.ps1 `
+  --model .\models\m7_p300\eegnet\model.joblib
+```
+
+EEGNet 依赖 PyTorch；没有现成环境时可安装 `.[deep,xdf]`。模型虽然可在 GPU 上
+训练，但 artifact 会保存为 CPU 权重，实时推理不要求 CUDA。
+
+训练完成后可以先跑两级无真机验证：
+
+```powershell
+# XDF -> ERP -> 模型 -> 六指令聚合 -> stdout 安全桥
+python .\tools\validate_p300_dry_run.py `
+  --data-root D:\codebase\BCI\data\bsense `
+  --model .\models\m7_p300\model.joblib
+
+# 真实 Trial 重放为 LSL -> 在线事件窗 -> 模型 -> 安全桥
+python .\tools\validate_p300_lsl_e2e.py `
+  --data-root D:\codebase\BCI\data\bsense `
+  --model .\models\m7_p300\model.joblib
+```
+
+两项验证都固定使用 `stdout`，只打印机器狗协议 JSON，不会让真机移动；在线验证会把
+接受阈值临时降为零，仅证明链路可运行，不改变控制台的正式安全阈值。没有模型时程序
+也不会用随机结果冒充脑控结果，M7 解码与连续脑控会保持不可用。
 
 控制台会把人工联调与真实 P300 决策分开写入
 `logs/m7_control_<时间>.jsonl`，其中 `brain_decoded` 可直接用于视频佐证和赛后审计。
@@ -67,7 +143,7 @@ Windows 双击：
 或在 PowerShell 中运行：
 
 ```powershell
-cd D:\codebase\BCI\bsense-realtime-classifier
+cd D:\codebase\BCI\bsense-realtime-classifier-master
 .\run_dog_controller.ps1
 ```
 
@@ -75,9 +151,9 @@ cd D:\codebase\BCI\bsense-realtime-classifier
 
 ```powershell
 bsense-dog-controller `
-  --model D:\codebase\BCI\bsense-realtime-classifier\models\m7_p300\model.joblib `
+  --model D:\codebase\BCI\bsense-realtime-classifier-master\models\m7_p300\model.joblib `
   --stream-name "你的 EEG 流名称" `
-  --bridge-config D:\codebase\BCI\bsense-realtime-classifier\config\unitree_bridge.json
+  --bridge-config D:\codebase\BCI\bsense-realtime-classifier-master\config\unitree_bridge.json
 ```
 
 ### M7 模型 artifact 契约
@@ -200,6 +276,78 @@ Unix Socket 只能用于同一台 Ubuntu 主机，因此正式方案要求 P300 
 Bridge 在同一台比赛电脑运行；脑电设备仍通过 LSL 发布数据。若解码器必须运行在
 Windows 电脑上，应改用保留的 HTTP 传输，并在 Ubuntu 侧增加对应网关。
 
+### macOS Apple Silicon 控制端
+
+Apple Silicon Mac 可以运行 P300 控制台和 LSL 解码，但 Unitree ROS 2 Bridge 仍
+建议运行在连接机器狗网卡的 Ubuntu 主机。两台机器通过带 Bearer Token 的双向 HTTP
+网关连接：
+
+```text
+Mac（EEG、刺激界面、P300 模型）
+  --HTTP + Token--> Ubuntu HTTP Gateway
+  --Unix Socket--> Unitree ROS 2 Bridge
+  --CycloneDDS--> 机器狗
+```
+
+Mac 安装：
+
+```bash
+git clone https://github.com/shaun5297/bsense-realtime-classifier.git
+cd bsense-realtime-classifier
+./scripts/setup_macos_arm64.sh
+```
+
+脚本要求原生 arm64 Python 3.11–3.13 和 Tk。`pylsl 1.18.2` 提供 macOS
+universal2 wheel。若只使用默认 LDA，不需要安装 PyTorch；要加载 EEGNet：
+
+```bash
+BCI_INSTALL_EEGNET=1 ./scripts/setup_macos_arm64.sh
+```
+
+首次先以安全模式启动，所有机器狗命令只输出到终端：
+
+```bash
+./scripts/run_dog_controller_macos.sh
+```
+
+真机模式需要先在 Ubuntu 设置一个至少 16 字符的随机令牌并启动 ROS 2 Bridge
+和 HTTP Gateway：
+
+```bash
+cd ~/bsense-realtime-classifier
+export BCI_BRIDGE_TOKEN='替换为至少16字符的随机令牌'
+export BCI_CYCLONEDDS_INTERFACE=enp3s0
+./scripts/run_unitree_bridge_for_macos.sh
+```
+
+然后在 Mac 使用同一令牌和 Ubuntu 局域网地址：
+
+```bash
+cd ~/bsense-realtime-classifier
+export BCI_CONTROL_MODE=http
+export BCI_UNITREE_HOST=192.168.1.50
+export BCI_BRIDGE_TOKEN='与Ubuntu完全相同的令牌'
+./scripts/run_dog_controller_macos.sh
+```
+
+不要把 8000 端口暴露到公网；只允许比赛局域网中的 Mac 访问。HTTP 网关只接受
+`bsense.unitree.command.v1` 六指令，限制请求大小，并把急停复位转换为 ROS 2
+Bridge 的显式 `arm` 请求。缺少令牌、机器狗状态过期、障碍未知、检测到障碍或急停
+锁存时，Mac 控制端都不能解锁。网关退出时也会尝试向 ROS 2 Bridge 发送急停。
+
+可选环境变量：
+
+- `BCI_EEG_STREAM_NAME`：Mac 上要连接的准确 LSL EEG 流名称；
+- `BCI_P300_MODEL`：默认 `models/m7_p300/model.joblib`；
+- `BCI_MACOS_VENV`：默认 `.venv-macos-arm64`；
+- `BCI_GATEWAY_HOST` / `BCI_GATEWAY_PORT`：Ubuntu 网关监听地址与端口；
+- `BCI_UNITREE_SOCKET`：Ubuntu ROS 2 Unix Socket；
+- `BCI_SPORT_STATE_TOPIC`：Ubuntu 侧默认使用 Go2-W 的
+  `/lf/sportmodestate`。
+
+macOS 真机链路始终要求 Ubuntu ROS 2 Bridge 的避障联锁开启；无传感器调试请使用
+前述本机联调方式，不要通过 HTTP 网关控制机器狗。
+
 ## 一键启动
 
 确保发布 EEG 数据的软件已经启动，然后双击：
@@ -213,7 +361,7 @@ Windows 电脑上，应改用保留的 HTTP 传输，并在 Ubuntu 侧增加对�
 也可以在 PowerShell 中运行：
 
 ```powershell
-cd D:\codebase\BCI\bsense-realtime-classifier
+cd D:\codebase\BCI\bsense-realtime-classifier-master
 .\run_classifier.ps1
 ```
 
@@ -325,11 +473,11 @@ BioMulti Lite 页面勾选了多项，如果 LSL 实际只发布/只发现 EEG�
 适合后台运行或给其他程序调用：
 
 ```powershell
-$env:PYTHONPATH = "D:\codebase\BCI\bsense-realtime-classifier\src"
+$env:PYTHONPATH = "D:\codebase\BCI\bsense-realtime-classifier-master\src"
 D:\ProgramData\miniforge3\envs\bci-gpu\python.exe -m bsense_classifier.cli `
-  --model D:\codebase\BCI\bsense-realtime-classifier\models\m3a_artifact\model.joblib `
+  --model D:\codebase\BCI\bsense-realtime-classifier-master\models\m3a_artifact\model.joblib `
   --stream-name "你的 EEG 流名称" `
-  --output D:\codebase\BCI\bsense-realtime-classifier\logs\artifact.jsonl
+  --output D:\codebase\BCI\bsense-realtime-classifier-master\logs\artifact.jsonl
 ```
 
 如果要在其他环境安装：

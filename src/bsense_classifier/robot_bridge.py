@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import socket
 import threading
 from dataclasses import dataclass
@@ -47,6 +48,7 @@ class RobotBridgeConfig:
     linear_speed_mps: float = 0.35
     backward_speed_mps: float = 0.25
     angular_speed_rps: float = 0.65
+    auth_token_env: str = ""
 
     @classmethod
     def load(cls, path: Path | str) -> "RobotBridgeConfig":
@@ -59,6 +61,10 @@ class RobotBridgeConfig:
             raise BridgeError(f"机器狗桥接配置不是有效 JSON：{exc}") from exc
         if not isinstance(raw, dict):
             raise BridgeError("机器狗桥接配置必须是 JSON 对象。")
+        raw = {
+            key: os.path.expandvars(value) if isinstance(value, str) else value
+            for key, value in raw.items()
+        }
         known = {field.name for field in cls.__dataclass_fields__.values()}
         unknown = sorted(set(raw) - known)
         if unknown:
@@ -82,6 +88,8 @@ class RobotBridgeConfig:
             raise BridgeError("转向角速度必须大于 0。")
         if self.transport == "unitree_ros2" and not self.socket_path.strip():
             raise BridgeError("unitree_ros2 传输必须提供 socket_path。")
+        if self.auth_token_env and not self.auth_token_env.strip():
+            raise BridgeError("auth_token_env 不能只包含空白字符。")
 
 
 @dataclass(frozen=True)
@@ -181,7 +189,7 @@ class RobotBridgeClient:
         request = Request(
             self.config.command_url,
             data=encoded,
-            headers={"Content-Type": "application/json"},
+            headers=self._http_headers(content_type=True),
             method="POST",
         )
         try:
@@ -291,7 +299,11 @@ class RobotBridgeClient:
             except BridgeError as exc:
                 return BridgeStatus(False, None, True, str(exc))
             return self._parse_status(raw)
-        request = Request(self.config.status_url, method="GET")
+        try:
+            headers = self._http_headers(content_type=False)
+        except BridgeError as exc:
+            return BridgeStatus(False, None, True, str(exc))
+        request = Request(self.config.status_url, headers=headers, method="GET")
         try:
             with urlopen(request, timeout=self.config.timeout_seconds) as response:
                 raw = json.loads(response.read().decode("utf-8"))
@@ -300,6 +312,20 @@ class RobotBridgeClient:
         if not isinstance(raw, dict):
             return BridgeStatus(False, None, True, "状态响应必须是 JSON 对象")
         return self._parse_status(raw)
+
+    def _http_headers(self, *, content_type: bool) -> dict[str, str]:
+        headers = {"Accept": "application/json"}
+        if content_type:
+            headers["Content-Type"] = "application/json"
+        environment_name = self.config.auth_token_env.strip()
+        if environment_name:
+            token = os.environ.get(environment_name, "").strip()
+            if not token:
+                raise BridgeError(
+                    f"HTTP 桥需要环境变量 {environment_name} 提供访问令牌。"
+                )
+            headers["Authorization"] = f"Bearer {token}"
+        return headers
 
     @staticmethod
     def _parse_status(raw: dict[str, Any]) -> BridgeStatus:

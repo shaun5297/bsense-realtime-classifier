@@ -30,7 +30,9 @@ ament_target_dependencies(
 
 install(TARGETS bsense_unitree_bridge DESTINATION lib/${PROJECT_NAME})
 install(
-  PROGRAMS scripts/run_p300_unitree.sh
+  PROGRAMS
+    scripts/run_p300_unitree.sh
+    scripts/run_unitree_bridge_for_macos.sh
   DESTINATION lib/${PROJECT_NAME}
 )
 install(DIRECTORY config models DESTINATION share/${PROJECT_NAME})

@@ -19,11 +19,15 @@ dependencies = [
 [project.optional-dependencies]
 test = ["pytest>=8.0"]
 xdf = ["pyxdf>=1.16"]
+deep = ["torch>=2.4"]
 
 [project.scripts]
 bsense-classifier = "bsense_classifier.app:main"
 bsense-classifier-cli = "bsense_classifier.cli:main"
 bsense-dog-controller = "bsense_classifier.robot_app:main"
+bsense-train-p300 = "bsense_classifier.p300_training:main"
+bsense-train-p300-eegnet = "bsense_classifier.p300_eegnet_training:main"
+bsense-unitree-http-gateway = "bsense_classifier.http_gateway:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

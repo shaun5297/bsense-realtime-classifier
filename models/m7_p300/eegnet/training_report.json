@@ -1,0 +1,163 @@
+{
+  "task": "m7_p300",
+  "model_name": "eegnet_2ch_erp",
+  "training_kind": "from_scratch",
+  "pretrained_weights_used": false,
+  "pretrained_reason": "本地权重的框架、60通道、151点和4分类契约与当前2通道、300点、二分类不匹配。",
+  "recording_count": 3,
+  "recordings": [
+    "D:\\codebase\\BCI\\data\\bsense\\bsense\\lq\\sub-pilot01_ses-01_task-m7_p300_run-001.xdf",
+    "D:\\codebase\\BCI\\data\\bsense\\bsense\\sxc\\sub-pilot01_ses-01_task-m7_p300_run-001.xdf",
+    "D:\\codebase\\BCI\\data\\bsense\\bsense\\xyz\\sub-pilot01_ses-01_task-m7_p300_run-001.xdf"
+  ],
+  "subject_groups": [
+    "lq",
+    "sxc",
+    "xyz"
+  ],
+  "valid_flash_epochs": 16200,
+  "class_counts": {
+    "non_target": 13500,
+    "target": 2700
+  },
+  "input_shape": [
+    2,
+    300
+  ],
+  "feature_mode": "erp_raw",
+  "evaluation": "leave_one_acquisition_folder_out",
+  "flash_metrics": {
+    "accuracy": 0.472962962962963,
+    "balanced_accuracy": 0.4974074074074074,
+    "f1": 0.25249518473122046,
+    "roc_auc": 0.4919759122085048,
+    "average_precision": 0.16378887958816948,
+    "confusion_matrix": [
+      [
+        6220,
+        7280
+      ],
+      [
+        1258,
+        1442
+      ]
+    ]
+  },
+  "trial_metrics": {
+    "trial_count": 540,
+    "command_accuracy": 0.1648148148148148,
+    "chance_accuracy": 0.16666666666666666
+  },
+  "folds": [
+    {
+      "fold": 1,
+      "test_subject": "lq",
+      "train_subjects": [
+        "sxc",
+        "xyz"
+      ],
+      "epochs_run": 12,
+      "best_validation_loss": 0.6930462531101557,
+      "device": "cuda",
+      "flash_metrics": {
+        "accuracy": 0.49425925925925923,
+        "balanced_accuracy": 0.5018888888888888,
+        "f1": 0.2528043775649795,
+        "roc_auc": 0.49211975308641975,
+        "average_precision": 0.16378673571774505,
+        "confusion_matrix": [
+          [
+            2207,
+            2293
+          ],
+          [
+            438,
+            462
+          ]
+        ]
+      },
+      "trial_metrics": {
+        "trial_count": 180,
+        "command_accuracy": 0.17777777777777778,
+        "chance_accuracy": 0.16666666666666666
+      }
+    },
+    {
+      "fold": 2,
+      "test_subject": "sxc",
+      "train_subjects": [
+        "lq",
+        "xyz"
+      ],
+      "epochs_run": 11,
+      "best_validation_loss": 0.6925586154431472,
+      "device": "cuda",
+      "flash_metrics": {
+        "accuracy": 0.27925925925925926,
+        "balanced_accuracy": 0.4893333333333333,
+        "f1": 0.2711610486891386,
+        "roc_auc": 0.48618827160493827,
+        "average_precision": 0.16198523887456318,
+        "confusion_matrix": [
+          [
+            784,
+            3716
+          ],
+          [
+            176,
+            724
+          ]
+        ]
+      },
+      "trial_metrics": {
+        "trial_count": 180,
+        "command_accuracy": 0.1388888888888889,
+        "chance_accuracy": 0.16666666666666666
+      }
+    },
+    {
+      "fold": 3,
+      "test_subject": "xyz",
+      "train_subjects": [
+        "lq",
+        "sxc"
+      ],
+      "epochs_run": 8,
+      "best_validation_loss": 0.6927708721455232,
+      "device": "cuda",
+      "flash_metrics": {
+        "accuracy": 0.6453703703703704,
+        "balanced_accuracy": 0.501,
+        "f1": 0.21096003296250515,
+        "roc_auc": 0.48672580246913577,
+        "average_precision": 0.1621621157119288,
+        "confusion_matrix": [
+          [
+            3229,
+            1271
+          ],
+          [
+            644,
+            256
+          ]
+        ]
+      },
+      "trial_metrics": {
+        "trial_count": 180,
+        "command_accuracy": 0.17777777777777778,
+        "chance_accuracy": 0.16666666666666666
+      }
+    }
+  ],
+  "final_training": {
+    "epochs_run": 7,
+    "best_validation_loss": 0.6939449517324628,
+    "device": "cuda"
+  },
+  "model_path": "D:\\codebase\\BCI\\bsense-realtime-classifier-master\\models\\m7_p300\\eegnet\\model.joblib",
+  "limitations": [
+    "FP1/FP2 不是典型 P300 顶区通道。",
+    "仅有三个独立采集组，深度模型指标不稳定。",
+    "当前结果只用于工程比较，真机仍须保留全部安全联锁。"
+  ]
+}

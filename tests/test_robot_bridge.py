@@ -50,6 +50,21 @@ def test_unitree_profiles_keep_obstacle_interlock_explicit() -> None:
     assert no_sensor_debug.require_obstacle_clear is False
 
 
+def test_http_token_is_read_from_environment(monkeypatch) -> None:
+    monkeypatch.setenv("BSENSE_TEST_TOKEN", "secret-token")
+    client = RobotBridgeClient(
+        RobotBridgeConfig(
+            transport="http",
+            auth_token_env="BSENSE_TEST_TOKEN",
+        )
+    )
+    assert client._http_headers(content_type=True) == {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "Authorization": "Bearer secret-token",
+    }
+
+
 class _FakeBridge:
     def __init__(self, status: BridgeStatus) -> None:
         self.config = RobotBridgeConfig(
