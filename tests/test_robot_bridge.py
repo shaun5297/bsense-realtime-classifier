@@ -33,6 +33,23 @@ def test_http_payload_uses_stable_command_contract() -> None:
     assert payload["confidence"] == 0.81
 
 
+def test_unitree_profiles_keep_obstacle_interlock_explicit() -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    competition = RobotBridgeConfig.load(
+        project_root / "config" / "unitree_bridge_ros2.json"
+    )
+    no_sensor_debug = RobotBridgeConfig.load(
+        project_root
+        / "config"
+        / "unitree_bridge_ros2_no_obstacle_sensor.json"
+    )
+
+    assert competition.transport == "unitree_ros2"
+    assert competition.require_obstacle_clear is True
+    assert no_sensor_debug.transport == "unitree_ros2"
+    assert no_sensor_debug.require_obstacle_clear is False
+
+
 class _FakeBridge:
     def __init__(self, status: BridgeStatus) -> None:
         self.config = RobotBridgeConfig(
@@ -97,6 +114,10 @@ def test_arm_explicitly_clears_bridge_emergency_latch() -> None:
     assert bridge.current_status.emergency_stopped is False
 
 
+@pytest.mark.skipif(
+    not hasattr(socket, "AF_UNIX"),
+    reason="Unix domain sockets are unavailable on this Python build",
+)
 def test_unitree_ros2_transport_is_bidirectional(tmp_path: Path) -> None:
     socket_path = tmp_path / "unitree.sock"
     ready = threading.Event()
