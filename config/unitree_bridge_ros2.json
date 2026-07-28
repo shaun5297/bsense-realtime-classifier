@@ -1,0 +1,14 @@
+{
+  "transport": "unitree_ros2",
+  "command_url": "http://127.0.0.1:8000/api/v1/command",
+  "status_url": "http://127.0.0.1:8000/api/v1/status",
+  "udp_host": "127.0.0.1",
+  "udp_port": 5005,
+  "socket_path": "/tmp/bsense_unitree.sock",
+  "timeout_seconds": 1.0,
+  "require_obstacle_clear": true,
+  "motion_duration_seconds": 0.8,
+  "linear_speed_mps": 0.35,
+  "backward_speed_mps": 0.25,
+  "angular_speed_rps": 0.65
+}

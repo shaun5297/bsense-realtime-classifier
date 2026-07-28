@@ -1,6 +1,11 @@
-# BSense 实时脑电分类器
+# BSense 实时脑电分类与 P300 机器狗控制
 
-这是一个独立运行的 FP1/FP2 双通道 EEG 实时分类项目。它可以：
+这是一个独立运行的 FP1/FP2 双通道 EEG 实时项目，包含两套入口：
+
+- `bsense-classifier`：原有的通用实验模型实时分析界面；
+- `bsense-dog-controller`：面向脑控机器狗赛道的 M7 P300 六指令控制台。
+
+通用分类器可以：
 
 - 加载项目内置的 6 个 BSense 模型；
 - 自动查找或按名称连接其他软件发布的 LSL EEG 流；
@@ -9,7 +14,177 @@
 - 在桌面界面显示分类、置信度、各类别概率和信号质量；
 - 将每次结果保存为 JSONL，便于后续统计和接入其他软件。
 
-> 当前模型属于实验模型，训练对象数量仍少。程序只输出分析结果，不会直接控制设备，也不能用于医疗、安全或驾驶判断。
+> 原有六个模型属于实验模型，训练对象数量仍少。只有专用
+> `bsense-dog-controller` 会经过安全联锁向机器狗桥接层发送指令；通用分类器仍然
+> 只输出分析结果。该项目不能用于医疗、安全或驾驶判断。
+
+## P300 脑控机器狗方案
+
+本方案与 `bsense-lsl` 的 `m7_p300` 数据格式配套。采集端的每个
+`p300_flash` Marker 已包含 `flash_command`、`flash_position`、`sequence` 和
+`is_target`，用于训练“单次闪烁是否为目标”的二分类模型。在线控制时，专用控制台
+自己显示同样的六宫格，并按 LSL 时钟把每次闪烁与 FP1/FP2 EEG 对齐；一个 Trial
+默认执行 10 个 Sequence，再将同一指令的目标概率求均值，选出：
+
+| 指令 | 桥接命令 | 默认速度 |
+|---|---|---|
+| 前进 | `forward` | `linear_x=0.35` |
+| 后退 | `backward` | `linear_x=-0.25` |
+| 左转 | `left` | `angular_z=0.65` |
+| 右转 | `right` | `angular_z=-0.65` |
+| 急停 | `stop` | 速度归零并锁定 |
+| 待机 | `idle` | 速度归零但保持已解锁状态 |
+
+只有同时满足以下条件时，移动指令才会下发：
+
+1. M7 Trial 六个指令都有足够的有效闪烁；
+2. 胜出指令的平均目标概率达到阈值；
+3. 第一名相对第二名的概率差达到阈值；
+4. EEG 质量合格窗口比例达到阈值；
+5. 操作员已经显式完成“安全检查并解锁”；
+6. 桥接端在线、未急停，并明确返回当前无障碍物。
+
+每个移动指令默认只持续 `0.8` 秒，控制端定时器会再次发送 `stop`。空格、Esc、
+界面急停按钮或解码出的“急停”都会立即归零并锁定，恢复前必须重新解锁。
+
+### 当前模型尚未训练时
+
+程序不会用随机模型或硬编码答案冒充脑控结果。没有
+`models/m7_p300/model.joblib` 时仍可启动界面：
+
+- 点击六宫格可联调桥接命令和运动方向；
+- 默认 `stdout` 传输只打印 JSON，不会移动真实机器狗；
+- M7 模型加载前不能连接 P300 解码器，也不能开始连续脑控；
+- 人工联调指令会在界面明确标为“人工点击”，不会记录成脑电解码。
+
+控制台会把人工联调与真实 P300 决策分开写入
+`logs/m7_control_<时间>.jsonl`，其中 `brain_decoded` 可直接用于视频佐证和赛后审计。
+
+Windows 双击：
+
+`run_dog_controller.bat`
+
+或在 PowerShell 中运行：
+
+```powershell
+cd D:\codebase\BCI\bsense-realtime-classifier
+.\run_dog_controller.ps1
+```
+
+安装项目后也可以运行：
+
+```powershell
+bsense-dog-controller `
+  --model D:\codebase\BCI\bsense-realtime-classifier\models\m7_p300\model.joblib `
+  --stream-name "你的 EEG 流名称" `
+  --bridge-config D:\codebase\BCI\bsense-realtime-classifier\config\unitree_bridge.json
+```
+
+### M7 模型 artifact 契约
+
+训练完成的模型继续使用现有 `artifact_schema_version=2`，并至少满足：
+
+```text
+task                 = m7_p300
+target_kind          = classification
+label_mapping        = {0: "non_target", 1: "target"}
+feature_mode         = erp
+deployment_mode      = event_locked_marker_required
+channel_count        = 2
+window_offset_seconds= -0.2
+window_seconds       = 1.2
+```
+
+实际 `sfreq`、带通范围、特征名称和模型对象必须来自训练过程，不能在部署端猜测。
+现有 `ModelRuntime` 会检查实时特征名称与训练 artifact 是否一致。由于 FP1/FP2
+不是典型 P300 最优位置，应以留一受试者验证、固定参赛者校准和现场混淆矩阵来设定
+置信度及领先差阈值。
+
+### Unitree 桥接配置
+
+默认联调配置位于 `config/unitree_bridge.json`。为防止首次启动误动作，默认使用：
+
+```json
+{"transport": "stdout"}
+```
+
+真机推荐使用 `config/unitree_bridge_ros2.json`，其链路为：
+
+```text
+BioMulti Lite --LSL EEG--> P300 实时控制台
+  --双向 Unix Socket--> bsense_unitree_bridge
+  --/api/sport/request + CycloneDDS--> Unitree 机器狗
+```
+
+Python 与 ROS 2 Bridge 使用 `bsense.unitree.command.v1`。控制端发送：
+
+```json
+{
+  "schema": "bsense.unitree.command.v1",
+  "kind": "command",
+  "command": "forward",
+  "linear_x": 0.35,
+  "angular_z": 0.0,
+  "duration_s": 0.8,
+  "source": "bsense_p300",
+  "confidence": 0.81,
+  "emergency": false,
+  "timestamp_utc": "..."
+}
+```
+
+ROS 2 Bridge 会响应：
+
+```json
+{
+  "connected": true,
+  "obstacle_detected": false,
+  "emergency_stopped": false,
+  "detail": "ok"
+}
+```
+
+桥接节点订阅 `sportmodestate` 的 `range_obstacle`，任一有效距离小于默认
+`0.45 m` 时立即停止；状态超过 1 秒未更新、距离数据未知、Socket 断开、动作时长
+到期或急停锁存时也会停止。Python 和 C++ 两侧都会限制动作时长，C++ 还会把线速度
+限制到 `0.5 m/s`、角速度限制到 `1.0 rad/s`。急停后只有操作员再次点击
+“安全检查并解锁”，且机器人状态与避障状态均正常时，Bridge 才会解除锁存。
+
+HTTP 与 UDP 仍保留为其他桥接实现的可选适配器。HTTP `status_url` 也支持
+`obstacle_clear` 作为 `obstacle_detected` 的反向字段。UDP 是单向模式，无法确认
+避障状态，不建议用于比赛。
+
+### Ubuntu / ROS 2 真机部署
+
+需要 ROS 2 Humble、Unitree ROS 2 功能包以及可用的 `unitree_api`、`unitree_go`
+消息：
+
+```bash
+cd /home/dd/bsense-realtime-classifier
+source /opt/ros/humble/setup.bash
+source /home/dd/unitree_ros2/setup.sh
+colcon build --packages-select bsense_realtime_classifier
+```
+
+连接机器狗网卡后启动完整 P300 控制台：
+
+```bash
+export BCI_CYCLONEDDS_INTERFACE=enp3s0
+./scripts/run_p300_unitree.sh
+```
+
+实际网卡名应通过 `ip -br link` 确认。可用环境变量覆盖默认路径：
+
+- `BCI_P300_MODEL`：训练完成的 `m7_p300/model.joblib`；
+- `BCI_UNITREE_SETUP`：Unitree ROS 2 的 `setup.sh`；
+- `BCI_UNITREE_SOCKET`：双向 Unix Socket 路径；
+- `BCI_SPORT_STATE_TOPIC`：默认 `sportmodestate`，低频话题可设为
+  `lf/sportmodestate`；
+- `BCI_OBSTACLE_DISTANCE_M`：障碍停止距离，默认 `0.45`。
+
+Unix Socket 只能用于同一台 Ubuntu 主机，因此正式方案要求 P300 控制台和 ROS 2
+Bridge 在同一台比赛电脑运行；脑电设备仍通过 LSL 发布数据。若解码器必须运行在
+Windows 电脑上，应改用保留的 HTTP 传输，并在 Ubuntu 侧增加对应网关。
 
 ## 一键启动
 

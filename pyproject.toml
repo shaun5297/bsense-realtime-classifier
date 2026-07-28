@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bsense-realtime-classifier"
-version = "0.1.0"
-description = "Standalone FP1/FP2 LSL model inference application for BSense"
+version = "0.2.0"
+description = "FP1/FP2 LSL inference and safe P300 Unitree control for BSense"
 readme = "README.md"
 requires-python = ">=3.11,<3.14"
 dependencies = [
@@ -23,6 +23,7 @@ xdf = ["pyxdf>=1.16"]
 [project.scripts]
 bsense-classifier = "bsense_classifier.app:main"
 bsense-classifier-cli = "bsense_classifier.cli:main"
+bsense-dog-controller = "bsense_classifier.robot_app:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
