@@ -71,6 +71,30 @@ def _default_bridge_config() -> str:
 
 class RobotControlApp:
     def __init__(self, root: tk.Tk, args: argparse.Namespace) -> None:
+        self.sequences_per_trial = getattr(args, "sequences_per_trial", SEQUENCES_PER_TRIAL)
+        if self.sequences_per_trial not in range(2, 11):
+            raise ValueError("每次选择的闪烁轮数必须在 2–10 之间。")
+        from .p300_control import P300EngineConfig as _EngineDefaults
+
+        self.confidence_threshold = float(
+            getattr(args, "confidence_threshold", _EngineDefaults.confidence_threshold)
+        )
+        self.margin_threshold = float(
+            getattr(args, "margin_threshold", _EngineDefaults.margin_threshold)
+        )
+        self.min_quality_ratio = float(
+            getattr(args, "min_quality_ratio", _EngineDefaults.minimum_quality_ratio)
+        )
+        for _name, _value in (
+            ("置信度门槛", self.confidence_threshold),
+            ("领先差门槛", self.margin_threshold),
+            ("质量比例门槛", self.min_quality_ratio),
+        ):
+            if not 0.0 <= _value <= 1.0:
+                raise ValueError(f"{_name}必须在 0–1 之间。")
+        self.thresholds_relaxed = gate_is_relaxed(
+            self.confidence_threshold, self.margin_threshold, self.min_quality_ratio
+        )
         self.root = root
         self.root.title("BSense P300 脑控机器狗")
         self.root.geometry("1420x900")
@@ -550,7 +574,13 @@ class RobotControlApp:
             return
         self.engine = P300ControlEngine(
             self.runtime,
-            P300EngineConfig(stream_name=self.stream_name.get().strip()),
+            P300EngineConfig(
+                stream_name=self.stream_name.get().strip(),
+                minimum_flashes_per_command=min(6, self.sequences_per_trial),
+                confidence_threshold=self.confidence_threshold,
+                margin_threshold=self.margin_threshold,
+                minimum_quality_ratio=self.min_quality_ratio,
+            ),
         )
         self.engine.start()
         self.decoder_status.set("正在连接 EEG")
@@ -626,7 +656,7 @@ class RobotControlApp:
     def _build_flash_plan(self) -> list[tuple[int, int, RobotCommand]]:
         plan: list[tuple[int, int, RobotCommand]] = []
         previous = self._previous_flash
-        for sequence in range(1, SEQUENCES_PER_TRIAL + 1):
+        for sequence in range(1, self.sequences_per_trial + 1):
             order = list(P300_COMMANDS)
             for _attempt in range(20):
                 random.shuffle(order)
@@ -647,7 +677,7 @@ class RobotControlApp:
         self._flash_plan = self._build_flash_plan()
         self._flash_index = 0
         self._selection_running = True
-        self.trial_status.set(f"Trial {self._trial_id} · 0/{SEQUENCES_PER_TRIAL}")
+        self.trial_status.set(f"Trial {self._trial_id} · 0/{self.sequences_per_trial}")
         self.result_text.set("注视目标")
         self.result_detail.set("刺激开始，请减少眨眼和面部动作。")
         for variable in self.score_labels.values():
@@ -671,7 +701,7 @@ class RobotControlApp:
         sequence, position, command = self._flash_plan[self._flash_index]
         self._flash_index += 1
         self.trial_status.set(
-            f"Trial {self._trial_id} · {sequence}/{SEQUENCES_PER_TRIAL}"
+            f"Trial {self._trial_id} · {sequence}/{self.sequences_per_trial}"
         )
         tile = self.command_tiles[command]
         tile.configure(bg=CYAN, fg=BG, highlightbackground="white")
@@ -785,6 +815,17 @@ class RobotControlApp:
                 f"FP1/FP2 · {float(event['input_sfreq']):g} Hz"
             )
             self._append_log(f"EEG 已连接：{event['stream_name']}")
+            self._append_log(
+                f"门控门槛：置信度 ≥ {self.confidence_threshold:g}、"
+                f"领先差 ≥ {self.margin_threshold:g}、"
+                f"质量比例 ≥ {self.min_quality_ratio:g}、"
+                f"每指令 ≥ {min(6, self.sequences_per_trial)} 次有效闪烁"
+            )
+            if self.thresholds_relaxed:
+                self._append_log(
+                    "警告：当前门槛低于默认值，接受率会被放宽，"
+                    "解码结果不足以作为真实运动依据。"
+                )
             warning = event.get("channel_warning")
             if warning:
                 self._append_log(str(warning))
@@ -869,6 +910,7 @@ class RobotControlApp:
     def _write_audit(self, record: dict[str, object]) -> None:
         payload = {
             "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+            "sequences_per_trial": self.sequences_per_trial,
             **record,
         }
         self.audit_path.parent.mkdir(parents=True, exist_ok=True)
@@ -889,9 +931,44 @@ class RobotControlApp:
         self.root.destroy()
 
 
+def gate_is_relaxed(confidence: float, margin: float, quality: float) -> bool:
+    """True when any gate is looser than the shipped default, so it can be surfaced."""
+    from .p300_control import P300EngineConfig
+
+    defaults = P300EngineConfig()
+    return (
+        confidence < defaults.confidence_threshold
+        or margin < defaults.margin_threshold
+        or quality < defaults.minimum_quality_ratio
+    )
+
+
+def _unit_float(value: str) -> float:
+    number = float(value)
+    if not 0.0 <= number <= 1.0:
+        raise argparse.ArgumentTypeError(f"门槛必须在 0–1 之间，收到 {value}")
+    return number
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="BSense P300 脑控机器狗控制台")
+    parser.add_argument(
+        "--sequences-per-trial", type=int, choices=range(2, 11), default=SEQUENCES_PER_TRIAL,
+        help="每次选择的闪烁轮数（默认 10）；缩短前需完成参赛者个体校准和在线验证。",
+    )
     parser.add_argument("--model", default="", help="m7_p300 model.joblib 路径")
+    parser.add_argument(
+        "--confidence-threshold", type=_unit_float, default=0.55,
+        help="胜出指令平均目标概率门槛（默认 0.55）；调低只用于台架联调，会放宽接受率。",
+    )
+    parser.add_argument(
+        "--margin-threshold", type=_unit_float, default=0.08,
+        help="第一名与第二名的概率差门槛（默认 0.08）；调低只用于台架联调。",
+    )
+    parser.add_argument(
+        "--min-quality-ratio", type=_unit_float, default=0.8,
+        help="合格 EEG 窗口比例门槛（默认 0.8）。",
+    )
     parser.add_argument("--stream-name", default="", help="EEG LSL 流名称")
     parser.add_argument(
         "--bridge-config",

@@ -1,0 +1,283 @@
+{
+  "task": "m7_p300",
+  "data_root_recordings": [
+    "recording_001.xdf",
+    "recording_002.xdf",
+    "recording_003.xdf"
+  ],
+  "recording_count": 3,
+  "subject_groups": [
+    "acquisition_001",
+    "acquisition_002",
+    "acquisition_003"
+  ],
+  "valid_flash_epochs": 16200,
+  "skipped_windows": 0,
+  "class_counts": {
+    "non_target": 13500,
+    "target": 2700
+  },
+  "selected_model": "shrinkage_lda",
+  "selected_flash_metrics": {
+    "accuracy": 0.525679012345679,
+    "balanced_accuracy": 0.49229629629629634,
+    "f1": 0.23709293089753772,
+    "roc_auc": 0.4886771330589849,
+    "average_precision": 0.16102056905124898,
+    "confusion_matrix": [
+      [
+        7322,
+        6178
+      ],
+      [
+        1506,
+        1194
+      ]
+    ]
+  },
+  "selected_trial_metrics": {
+    "trial_count": 540,
+    "command_accuracy": 0.16666666666666666,
+    "chance_accuracy": 0.16666666666666666
+  },
+  "models": {
+    "balanced_logistic_regression": {
+      "flash_metrics": {
+        "accuracy": 0.5267283950617284,
+        "balanced_accuracy": 0.49722222222222223,
+        "f1": 0.24186690398496985,
+        "roc_auc": 0.4922360768175583,
+        "average_precision": 0.1634958049366546,
+        "confusion_matrix": [
+          [
+            7310,
+            6190
+          ],
+          [
+            1477,
+            1223
+          ]
+        ]
+      },
+      "trial_metrics": {
+        "trial_count": 540,
+        "command_accuracy": 0.1648148148148148,
+        "chance_accuracy": 0.16666666666666666
+      },
+      "folds": [
+        {
+          "fold": 1,
+          "test_subject": "acquisition_001",
+          "train_subjects": [
+            "acquisition_002",
+            "acquisition_003"
+          ],
+          "flash_metrics": {
+            "accuracy": 0.5064814814814815,
+            "balanced_accuracy": 0.4892222222222222,
+            "f1": 0.23835381537582168,
+            "roc_auc": 0.48615185185185184,
+            "average_precision": 0.1621957198117846,
+            "confusion_matrix": [
+              [
+                2318,
+                2182
+              ],
+              [
+                483,
+                417
+              ]
+            ]
+          },
+          "trial_metrics": {
+            "trial_count": 180,
+            "command_accuracy": 0.17777777777777778,
+            "chance_accuracy": 0.16666666666666666
+          }
+        },
+        {
+          "fold": 2,
+          "test_subject": "acquisition_002",
+          "train_subjects": [
+            "acquisition_001",
+            "acquisition_003"
+          ],
+          "flash_metrics": {
+            "accuracy": 0.5496296296296296,
+            "balanced_accuracy": 0.49822222222222223,
+            "f1": 0.23761755485893418,
+            "roc_auc": 0.4979738271604938,
+            "average_precision": 0.16743469925669832,
+            "confusion_matrix": [
+              [
+                2589,
+                1911
+              ],
+              [
+                521,
+                379
+              ]
+            ]
+          },
+          "trial_metrics": {
+            "trial_count": 180,
+            "command_accuracy": 0.18888888888888888,
+            "chance_accuracy": 0.16666666666666666
+          }
+        },
+        {
+          "fold": 3,
+          "test_subject": "acquisition_003",
+          "train_subjects": [
+            "acquisition_001",
+            "acquisition_002"
+          ],
+          "flash_metrics": {
+            "accuracy": 0.524074074074074,
+            "balanced_accuracy": 0.5042222222222222,
+            "f1": 0.24941588785046728,
+            "roc_auc": 0.4935395061728395,
+            "average_precision": 0.16360297902848983,
+            "confusion_matrix": [
+              [
+                2403,
+                2097
+              ],
+              [
+                473,
+                427
+              ]
+            ]
+          },
+          "trial_metrics": {
+            "trial_count": 180,
+            "command_accuracy": 0.12777777777777777,
+            "chance_accuracy": 0.16666666666666666
+          }
+        }
+      ]
+    },
+    "shrinkage_lda": {
+      "flash_metrics": {
+        "accuracy": 0.525679012345679,
+        "balanced_accuracy": 0.49229629629629634,
+        "f1": 0.23709293089753772,
+        "roc_auc": 0.4886771330589849,
+        "average_precision": 0.16102056905124898,
+        "confusion_matrix": [
+          [
+            7322,
+            6178
+          ],
+          [
+            1506,
+            1194
+          ]
+        ]
+      },
+      "trial_metrics": {
+        "trial_count": 540,
+        "command_accuracy": 0.16666666666666666,
+        "chance_accuracy": 0.16666666666666666
+      },
+      "folds": [
+        {
+          "fold": 1,
+          "test_subject": "acquisition_001",
+          "train_subjects": [
+            "acquisition_002",
+            "acquisition_003"
+          ],
+          "flash_metrics": {
+            "accuracy": 0.5168518518518519,
+            "balanced_accuracy": 0.49677777777777776,
+            "f1": 0.2435488547405045,
+            "roc_auc": 0.4913312345679013,
+            "average_precision": 0.1626607221160929,
+            "confusion_matrix": [
+              [
+                2371,
+                2129
+              ],
+              [
+                480,
+                420
+              ]
+            ]
+          },
+          "trial_metrics": {
+            "trial_count": 180,
+            "command_accuracy": 0.2,
+            "chance_accuracy": 0.16666666666666666
+          }
+        },
+        {
+          "fold": 2,
+          "test_subject": "acquisition_002",
+          "train_subjects": [
+            "acquisition_001",
+            "acquisition_003"
+          ],
+          "flash_metrics": {
+            "accuracy": 0.5416666666666666,
+            "balanced_accuracy": 0.49388888888888893,
+            "f1": 0.23493044822256567,
+            "roc_auc": 0.48626469135802464,
+            "average_precision": 0.16080686113245407,
+            "confusion_matrix": [
+              [
+                2545,
+                1955
+              ],
+              [
+                520,
+                380
+              ]
+            ]
+          },
+          "trial_metrics": {
+            "trial_count": 180,
+            "command_accuracy": 0.16111111111111112,
+            "chance_accuracy": 0.16666666666666666
+          }
+        },
+        {
+          "fold": 3,
+          "test_subject": "acquisition_003",
+          "train_subjects": [
+            "acquisition_001",
+            "acquisition_002"
+          ],
+          "flash_metrics": {
+            "accuracy": 0.5185185185185185,
+            "balanced_accuracy": 0.4862222222222222,
+            "f1": 0.23258559622195984,
+            "roc_auc": 0.48264617283950617,
+            "average_precision": 0.15793739272617918,
+            "confusion_matrix": [
+              [
+                2406,
+                2094
+              ],
+              [
+                506,
+                394
+              ]
+            ]
+          },
+          "trial_metrics": {
+            "trial_count": 180,
+            "command_accuracy": 0.1388888888888889,
+            "chance_accuracy": 0.16666666666666666
+          }
+        }
+      ]
+    }
+  },
+  "model_path": "model.joblib",
+  "limitations": [
+    "FP1/FP2 不是典型 P300 顶区通道。",
+    "当前独立采集人数很少，指标仅用于工程联调。",
+    "真实机器狗必须继续使用解锁、避障、急停和动作超时联锁。"
+  ]
+}

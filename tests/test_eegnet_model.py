@@ -2,6 +2,10 @@ from __future__ import annotations
 
 import joblib
 import numpy as np
+import pytest
+
+# EEGNet 需要可选的 deep extra；未安装时跳过，而不是让整个测试套件失败。
+pytest.importorskip("torch", reason="EEGNet 需要可选依赖 deep（pip install -e '.[deep]'）")
 
 from bsense_classifier.eegnet_model import TorchEEGNetClassifier
 

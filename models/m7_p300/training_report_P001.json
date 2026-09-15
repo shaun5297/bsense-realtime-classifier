@@ -1,0 +1,169 @@
+{
+  "status": "trained",
+  "generated_unix": 1789480448.752643,
+  "training_seconds": 0.2,
+  "model_kind": "lda",
+  "model_name": "personal_shrinkage_lda_late_window",
+  "software_versions": {
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "scikit-learn": "1.9.1",
+    "joblib": "1.6.0",
+    "pyxdf": "1.17.5"
+  },
+  "data": {
+    "sessions": 7,
+    "subjects": [
+      "acquisition_001"
+    ],
+    "cohorts": [
+      "pilot"
+    ],
+    "epochs": 14148,
+    "targets": 2358,
+    "trials": 393,
+    "session_keys": [
+      "recording_001.xdf",
+      "recording_002.xdf",
+      "recording_003.xdf",
+      "recording_004.xdf",
+      "recording_005.xdf",
+      "recording_006.xdf",
+      "recording_007.xdf"
+    ]
+  },
+  "evaluation": {
+    "scheme": "leave_one_session_out",
+    "units_scored": 7,
+    "epochs_scored": 14148,
+    "per_flash_auc": 0.5144206537792769,
+    "per_flash_auc_wilson95": [
+      0.5486985967135293,
+      0.5650675155357768
+    ],
+    "per_unit": [
+      {
+        "unit": "recording_001.xdf",
+        "epochs": 1188,
+        "targets": 198,
+        "per_flash_auc": 0.49453627180899906,
+        "trial_accuracy": 0.18181818181818182
+      },
+      {
+        "unit": "recording_002.xdf",
+        "epochs": 2160,
+        "targets": 360,
+        "per_flash_auc": 0.5077083333333332,
+        "trial_accuracy": 0.18333333333333332
+      },
+      {
+        "unit": "recording_003.xdf",
+        "epochs": 2160,
+        "targets": 360,
+        "per_flash_auc": 0.49537962962962967,
+        "trial_accuracy": 0.16666666666666666
+      },
+      {
+        "unit": "recording_004.xdf",
+        "epochs": 2160,
+        "targets": 360,
+        "per_flash_auc": 0.5051836419753086,
+        "trial_accuracy": 0.23333333333333334
+      },
+      {
+        "unit": "recording_005.xdf",
+        "epochs": 2160,
+        "targets": 360,
+        "per_flash_auc": 0.5289567901234569,
+        "trial_accuracy": 0.2833333333333333
+      },
+      {
+        "unit": "recording_006.xdf",
+        "epochs": 2160,
+        "targets": 360,
+        "per_flash_auc": 0.5227052469135802,
+        "trial_accuracy": 0.31666666666666665
+      },
+      {
+        "unit": "recording_007.xdf",
+        "epochs": 2160,
+        "targets": 360,
+        "per_flash_auc": 0.5334537037037037,
+        "trial_accuracy": 0.26666666666666666
+      }
+    ],
+    "chance_per_flash_auc": 0.5,
+    "chance_trial_accuracy": 0.16666666666666666,
+    "trial_accuracy_at_2_sequences": {
+      "sequences": 2,
+      "trials": 393,
+      "complete_trials": 393,
+      "command_accuracy": 0.19083969465648856,
+      "command_accuracy_wilson95": [
+        0.15505352493426228,
+        0.2326114779283408
+      ],
+      "coverage": 0.005089058524173028,
+      "accepted_accuracy": 0.0,
+      "accepted_wrong": 2,
+      "estimated_selection_seconds": 4.9
+    },
+    "trial_accuracy_at_4_sequences": {
+      "sequences": 4,
+      "trials": 393,
+      "complete_trials": 393,
+      "command_accuracy": 0.1984732824427481,
+      "command_accuracy_wilson95": [
+        0.1620412108791262,
+        0.2407431746288447
+      ],
+      "coverage": 0.0,
+      "accepted_accuracy": null,
+      "accepted_wrong": 0,
+      "estimated_selection_seconds": 7.0
+    },
+    "trial_accuracy_at_6_sequences": {
+      "sequences": 6,
+      "trials": 393,
+      "complete_trials": 393,
+      "command_accuracy": 0.2366412213740458,
+      "command_accuracy_wilson95": [
+        0.1972956076241474,
+        0.28108569111066256
+      ],
+      "coverage": 0.0,
+      "accepted_accuracy": null,
+      "accepted_wrong": 0,
+      "estimated_selection_seconds": 9.1
+    }
+  },
+  "artifact_contract": {
+    "task": "m7_p300",
+    "target_kind": "classification",
+    "deployment_mode": "event_locked_marker_required",
+    "n_features": 120,
+    "window_seconds": 1.2,
+    "window_offset_seconds": -0.2,
+    "bandpass_hz": [
+      0.5,
+      20.0
+    ],
+    "feature_window_seconds": [
+      0.3,
+      0.9
+    ]
+  },
+  "summary": {
+    "sessions": 7,
+    "epochs": 14148,
+    "subjects": [
+      "acquisition_001"
+    ],
+    "per_flash_auc": 0.5144206537792769,
+    "trial_accuracy_at_6_sequences": 0.2366412213740458,
+    "accepted_accuracy_at_6": null,
+    "coverage_at_6": 0.0,
+    "chance_trial_accuracy": 0.16666666666666666
+  },
+  "dataset_label": "p300_curated"
+}

@@ -49,17 +49,38 @@
 
 ### 当前模型与训练数据
 
-当前 `models/m7_p300/model.joblib` 已由 `data/bsense` 中 3 份完整 M7
-记录（`lq`、`sxc`、`xyz`）训练得到，共使用 16,200 个有效闪烁窗口。训练器按采集
-目录做留一交叉验证，当前六指令 Trial 准确率为 `16.67%`，等于六分类随机水平。
-这个模型只用于打通工程链路，不代表已获得可用的脑控精度。
+`models/m7_p300/` 下有四个可选模型，**默认加载 `model.joblib`**：
+
+| 文件 | 训练数据 | 特征窗 | 单闪烁 AUC | 六指令 Trial |
+|---|---|---|---:|---:|
+| `model.joblib`（默认） | `data/p300` 新数据，15 会话 / 6 人 / 31,428 窗 | 0.3–0.9 s | 0.524 | 0.229 |
+| `model_P001_personal.joblib` | 新数据单被试，7 会话 / 14,148 窗 | 0.3–0.9 s | 0.514 | 0.237 |
+| `model_legacy_lda.joblib` | `data/bsense` 老数据，3 会话 / 16,200 窗 | −0.2–1.0 s | 0.489 | 0.167 |
+| `model_mixed_cohorts.joblib` | 新旧合并，18 会话 / 9 人 / 47,628 窗 | −0.2–1.0 s | 0.512 | 0.119 |
+
+六分类随机水平为 `0.167`。**四个模型都接近随机**，只用于打通工程链路，
+不代表已获得可用的脑控精度。默认阈值下接受率约 `0.2%`，实际基本不会下发指令。
+
+默认模型改用新数据的原因：老数据（`bsense-lsl` 的 `m7_p300_v1`，`lq`/`sxc`/`xyz`
+三份记录）在留一评估中 Trial 准确率恰好为 `0.000`，与其它数据合并会把结果从
+`0.229` 拉低到 `0.119`。`bsense-p300-pilot` 采集的 15 个会话判别力略高，因此作为默认。
+
+判别力受限的根因在采集端：数据里刺激锁定的诱发电位**可复现**（分段信度中位
+r=0.651），但**目标减非目标**的差异**不可复现**（中位 r=0.231，8 个最干净会话
+−0.006）。FP1/FP2 是额区，P300 在顶区最大；采集软件自己在 marker 里写着
+`device_channel_limit=fp1_fp2_not_p300_optimal`。扫过 90 种「时间窗 × 通道子集 ×
+模型族」组合，没有一种单闪烁 AUC 超过 0.55。
 
 训练产物包括：
 
-- `models/m7_p300/model.joblib`：实时控制台直接加载的模型；
-- `models/m7_p300/training_report.json`：数据统计、逐折指标与局限性；
-- `models/m7_p300/cross_subject_flash_predictions.csv`：逐闪烁预测；
-- `models/m7_p300/trial_predictions_*.csv`：六指令 Trial 聚合结果。
+- `models/m7_p300/model.joblib`：实时控制台默认加载的模型；
+- `models/m7_p300/model_legacy_lda.joblib`、`model_mixed_cohorts.joblib`、
+  `model_P001_personal.joblib`：对照与个体模型，用 `--model` 指定；
+- `models/m7_p300/training_report*.json`：数据统计、逐折指标与局限性；
+- `models/m7_p300/eegnet/`：EEGNet 对照模型（需要 `deep` 可选依赖）。
+
+打包模型的元数据已去标识化：本地路径与被试标签替换为 `acquisition_00N` /
+`recording_00N.xdf` 稳定别名，由 `tests/test_p300_training.py` 校验。
 
 训练器会递归发现新增的 `task-m7_p300*.xdf`。后续用 `bsense-lsl` 继续采集后，
 在项目目录重新运行即可覆盖生成新模型：

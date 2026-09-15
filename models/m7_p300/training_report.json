@@ -1,283 +1,180 @@
 {
-  "task": "m7_p300",
-  "data_root_recordings": [
-    "recording_001.xdf",
-    "recording_002.xdf",
-    "recording_003.xdf"
-  ],
-  "recording_count": 3,
-  "subject_groups": [
-    "acquisition_001",
-    "acquisition_002",
-    "acquisition_003"
-  ],
-  "valid_flash_epochs": 16200,
-  "skipped_windows": 0,
-  "class_counts": {
-    "non_target": 13500,
-    "target": 2700
+  "status": "trained",
+  "generated_unix": 1789480448.969502,
+  "training_seconds": 0.37,
+  "model_kind": "lda",
+  "model_name": "pooled_shrinkage_lda_late_window",
+  "software_versions": {
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "scikit-learn": "1.9.1",
+    "joblib": "1.6.0",
+    "pyxdf": "1.17.5"
   },
-  "selected_model": "shrinkage_lda",
-  "selected_flash_metrics": {
-    "accuracy": 0.525679012345679,
-    "balanced_accuracy": 0.49229629629629634,
-    "f1": 0.23709293089753772,
-    "roc_auc": 0.4886771330589849,
-    "average_precision": 0.16102056905124898,
-    "confusion_matrix": [
-      [
-        7322,
-        6178
-      ],
-      [
-        1506,
-        1194
-      ]
+  "data": {
+    "sessions": 15,
+    "subjects": [
+      "acquisition_001",
+      "acquisition_002",
+      "acquisition_003",
+      "acquisition_004",
+      "acquisition_005",
+      "acquisition_006"
+    ],
+    "cohorts": [
+      "pilot"
+    ],
+    "epochs": 31428,
+    "targets": 5238,
+    "trials": 873,
+    "session_keys": [
+      "recording_001.xdf",
+      "recording_002.xdf",
+      "recording_003.xdf",
+      "recording_004.xdf",
+      "recording_005.xdf",
+      "recording_006.xdf",
+      "recording_007.xdf",
+      "recording_008.xdf",
+      "recording_009.xdf",
+      "recording_010.xdf",
+      "recording_011.xdf",
+      "recording_012.xdf",
+      "recording_013.xdf",
+      "recording_014.xdf",
+      "recording_015.xdf"
     ]
   },
-  "selected_trial_metrics": {
-    "trial_count": 540,
-    "command_accuracy": 0.16666666666666666,
-    "chance_accuracy": 0.16666666666666666
-  },
-  "models": {
-    "balanced_logistic_regression": {
-      "flash_metrics": {
-        "accuracy": 0.5267283950617284,
-        "balanced_accuracy": 0.49722222222222223,
-        "f1": 0.24186690398496985,
-        "roc_auc": 0.4922360768175583,
-        "average_precision": 0.1634958049366546,
-        "confusion_matrix": [
-          [
-            7310,
-            6190
-          ],
-          [
-            1477,
-            1223
-          ]
-        ]
+  "evaluation": {
+    "scheme": "leave_one_subject_out",
+    "units_scored": 6,
+    "epochs_scored": 31428,
+    "per_flash_auc": 0.5240424667098498,
+    "per_flash_auc_wilson95": [
+      0.5347997788960145,
+      0.5458191053630611
+    ],
+    "per_unit": [
+      {
+        "unit": "acquisition_001",
+        "epochs": 14148,
+        "targets": 2358,
+        "per_flash_auc": 0.5227984642179618,
+        "trial_accuracy": 0.24936386768447838
       },
-      "trial_metrics": {
-        "trial_count": 540,
-        "command_accuracy": 0.1648148148148148,
-        "chance_accuracy": 0.16666666666666666
+      {
+        "unit": "acquisition_002",
+        "epochs": 6480,
+        "targets": 1080,
+        "per_flash_auc": 0.5380173182441702,
+        "trial_accuracy": 0.24444444444444444
       },
-      "folds": [
-        {
-          "fold": 1,
-          "test_subject": "acquisition_001",
-          "train_subjects": [
-            "acquisition_002",
-            "acquisition_003"
-          ],
-          "flash_metrics": {
-            "accuracy": 0.5064814814814815,
-            "balanced_accuracy": 0.4892222222222222,
-            "f1": 0.23835381537582168,
-            "roc_auc": 0.48615185185185184,
-            "average_precision": 0.1621957198117846,
-            "confusion_matrix": [
-              [
-                2318,
-                2182
-              ],
-              [
-                483,
-                417
-              ]
-            ]
-          },
-          "trial_metrics": {
-            "trial_count": 180,
-            "command_accuracy": 0.17777777777777778,
-            "chance_accuracy": 0.16666666666666666
-          }
-        },
-        {
-          "fold": 2,
-          "test_subject": "acquisition_002",
-          "train_subjects": [
-            "acquisition_001",
-            "acquisition_003"
-          ],
-          "flash_metrics": {
-            "accuracy": 0.5496296296296296,
-            "balanced_accuracy": 0.49822222222222223,
-            "f1": 0.23761755485893418,
-            "roc_auc": 0.4979738271604938,
-            "average_precision": 0.16743469925669832,
-            "confusion_matrix": [
-              [
-                2589,
-                1911
-              ],
-              [
-                521,
-                379
-              ]
-            ]
-          },
-          "trial_metrics": {
-            "trial_count": 180,
-            "command_accuracy": 0.18888888888888888,
-            "chance_accuracy": 0.16666666666666666
-          }
-        },
-        {
-          "fold": 3,
-          "test_subject": "acquisition_003",
-          "train_subjects": [
-            "acquisition_001",
-            "acquisition_002"
-          ],
-          "flash_metrics": {
-            "accuracy": 0.524074074074074,
-            "balanced_accuracy": 0.5042222222222222,
-            "f1": 0.24941588785046728,
-            "roc_auc": 0.4935395061728395,
-            "average_precision": 0.16360297902848983,
-            "confusion_matrix": [
-              [
-                2403,
-                2097
-              ],
-              [
-                473,
-                427
-              ]
-            ]
-          },
-          "trial_metrics": {
-            "trial_count": 180,
-            "command_accuracy": 0.12777777777777777,
-            "chance_accuracy": 0.16666666666666666
-          }
-        }
-      ]
+      {
+        "unit": "acquisition_003",
+        "epochs": 2160,
+        "targets": 360,
+        "per_flash_auc": 0.5432407407407407,
+        "trial_accuracy": 0.16666666666666666
+      },
+      {
+        "unit": "acquisition_004",
+        "epochs": 2160,
+        "targets": 360,
+        "per_flash_auc": 0.5710293209876544,
+        "trial_accuracy": 0.36666666666666664
+      },
+      {
+        "unit": "acquisition_005",
+        "epochs": 2160,
+        "targets": 360,
+        "per_flash_auc": 0.5351496913580247,
+        "trial_accuracy": 0.18333333333333332
+      },
+      {
+        "unit": "acquisition_006",
+        "epochs": 4320,
+        "targets": 720,
+        "per_flash_auc": 0.4827696759259259,
+        "trial_accuracy": 0.125
+      }
+    ],
+    "chance_per_flash_auc": 0.5,
+    "chance_trial_accuracy": 0.16666666666666666,
+    "trial_accuracy_at_2_sequences": {
+      "sequences": 2,
+      "trials": 873,
+      "complete_trials": 873,
+      "command_accuracy": 0.18671248568155785,
+      "command_accuracy_wilson95": [
+        0.16225541896721724,
+        0.21391468975025235
+      ],
+      "coverage": 0.020618556701030927,
+      "accepted_accuracy": 0.1111111111111111,
+      "accepted_wrong": 16,
+      "estimated_selection_seconds": 4.9
     },
-    "shrinkage_lda": {
-      "flash_metrics": {
-        "accuracy": 0.525679012345679,
-        "balanced_accuracy": 0.49229629629629634,
-        "f1": 0.23709293089753772,
-        "roc_auc": 0.4886771330589849,
-        "average_precision": 0.16102056905124898,
-        "confusion_matrix": [
-          [
-            7322,
-            6178
-          ],
-          [
-            1506,
-            1194
-          ]
-        ]
-      },
-      "trial_metrics": {
-        "trial_count": 540,
-        "command_accuracy": 0.16666666666666666,
-        "chance_accuracy": 0.16666666666666666
-      },
-      "folds": [
-        {
-          "fold": 1,
-          "test_subject": "acquisition_001",
-          "train_subjects": [
-            "acquisition_002",
-            "acquisition_003"
-          ],
-          "flash_metrics": {
-            "accuracy": 0.5168518518518519,
-            "balanced_accuracy": 0.49677777777777776,
-            "f1": 0.2435488547405045,
-            "roc_auc": 0.4913312345679013,
-            "average_precision": 0.1626607221160929,
-            "confusion_matrix": [
-              [
-                2371,
-                2129
-              ],
-              [
-                480,
-                420
-              ]
-            ]
-          },
-          "trial_metrics": {
-            "trial_count": 180,
-            "command_accuracy": 0.2,
-            "chance_accuracy": 0.16666666666666666
-          }
-        },
-        {
-          "fold": 2,
-          "test_subject": "acquisition_002",
-          "train_subjects": [
-            "acquisition_001",
-            "acquisition_003"
-          ],
-          "flash_metrics": {
-            "accuracy": 0.5416666666666666,
-            "balanced_accuracy": 0.49388888888888893,
-            "f1": 0.23493044822256567,
-            "roc_auc": 0.48626469135802464,
-            "average_precision": 0.16080686113245407,
-            "confusion_matrix": [
-              [
-                2545,
-                1955
-              ],
-              [
-                520,
-                380
-              ]
-            ]
-          },
-          "trial_metrics": {
-            "trial_count": 180,
-            "command_accuracy": 0.16111111111111112,
-            "chance_accuracy": 0.16666666666666666
-          }
-        },
-        {
-          "fold": 3,
-          "test_subject": "acquisition_003",
-          "train_subjects": [
-            "acquisition_001",
-            "acquisition_002"
-          ],
-          "flash_metrics": {
-            "accuracy": 0.5185185185185185,
-            "balanced_accuracy": 0.4862222222222222,
-            "f1": 0.23258559622195984,
-            "roc_auc": 0.48264617283950617,
-            "average_precision": 0.15793739272617918,
-            "confusion_matrix": [
-              [
-                2406,
-                2094
-              ],
-              [
-                506,
-                394
-              ]
-            ]
-          },
-          "trial_metrics": {
-            "trial_count": 180,
-            "command_accuracy": 0.1388888888888889,
-            "chance_accuracy": 0.16666666666666666
-          }
-        }
-      ]
+    "trial_accuracy_at_4_sequences": {
+      "sequences": 4,
+      "trials": 873,
+      "complete_trials": 873,
+      "command_accuracy": 0.20504009163802978,
+      "command_accuracy_wilson95": [
+        0.17957799518304515,
+        0.23308673240287228
+      ],
+      "coverage": 0.004581901489117984,
+      "accepted_accuracy": 0.0,
+      "accepted_wrong": 4,
+      "estimated_selection_seconds": 7.0
+    },
+    "trial_accuracy_at_6_sequences": {
+      "sequences": 6,
+      "trials": 873,
+      "complete_trials": 873,
+      "command_accuracy": 0.2290950744558992,
+      "command_accuracy_wilson95": [
+        0.2024400645749191,
+        0.2581238502758361
+      ],
+      "coverage": 0.002290950744558992,
+      "accepted_accuracy": 0.0,
+      "accepted_wrong": 2,
+      "estimated_selection_seconds": 9.1
     }
   },
-  "model_path": "model.joblib",
-  "limitations": [
-    "FP1/FP2 不是典型 P300 顶区通道。",
-    "当前独立采集人数很少，指标仅用于工程联调。",
-    "真实机器狗必须继续使用解锁、避障、急停和动作超时联锁。"
-  ]
+  "artifact_contract": {
+    "task": "m7_p300",
+    "target_kind": "classification",
+    "deployment_mode": "event_locked_marker_required",
+    "n_features": 120,
+    "window_seconds": 1.2,
+    "window_offset_seconds": -0.2,
+    "bandpass_hz": [
+      0.5,
+      20.0
+    ],
+    "feature_window_seconds": [
+      0.3,
+      0.9
+    ]
+  },
+  "summary": {
+    "sessions": 15,
+    "epochs": 31428,
+    "subjects": [
+      "acquisition_001",
+      "acquisition_002",
+      "acquisition_003",
+      "acquisition_004",
+      "acquisition_005",
+      "acquisition_006"
+    ],
+    "per_flash_auc": 0.5240424667098498,
+    "trial_accuracy_at_6_sequences": 0.2290950744558992,
+    "accepted_accuracy_at_6": 0.0,
+    "coverage_at_6": 0.002290950744558992,
+    "chance_trial_accuracy": 0.16666666666666666
+  },
+  "dataset_label": "p300_curated"
 }
